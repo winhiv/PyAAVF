@@ -1,19 +1,17 @@
 from setuptools import setup
 
 setup(
-    name='{{ package_name }}',
-    version='{{ package_version }}',
-    packages=('{{ package_dir_name }}',),
-    url='https://github.com/{{ github_user }}/{{ repo_name }}',
+    name='PyAAVF',
+    version='0.1.0',
+    packages=('PyAAVF',),
+    url='https://github.com/winhiv/PyAAVF',
     license='MIT',
-    author='{{ author_name }}',
-    author_email='{{ author_email }}',
-    install_requires=(
-        {{ install_requires|pytuple }}),
-    tests_require=(
-        {{ tests_require|pytuple }}),
+    author='Matthew Fogel',
+    author_email='matthew.fogel@canada.ca',
+    install_requires=(),
+    tests_require=(),
     description=(
-        {{ short_description|pystring }}),
+        'An Amino Acid Variant Format parser for Python.'),
     classifiers=(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
