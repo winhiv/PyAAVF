@@ -129,9 +129,6 @@ SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference']
 # Conversion between value in file and Python value
 field_counts = {
     '.': None,  # Unknown number of values
-    'A': -1,  # Equal to the number of alternate alleles in a given record
-    'G': -2,  # Equal to the number of genotypes in a given record
-    'R': -3,  # Equal to the number of alleles including reference in a given record
 }
 
 
@@ -143,13 +140,13 @@ _SampleInfo = collections.namedtuple('SampleInfo', ['samples', 'gt_bases', 'gt_t
 _Contig = collections.namedtuple('Contig', ['id', 'length'])
 
 
-class _vcf_metadata_parser(object):
-    '''Parse the metadata in the header of a VCF file.'''
+class _aavf_metadata_parser(object):
+    '''Parse the metadata in the header of a AAVF file.'''
     def __init__(self):
         super(_vcf_metadata_parser, self).__init__()
         self.info_pattern = re.compile(r'''\#\#INFO=<
             ID=(?P<id>[^,]+),\s*
-            Number=(?P<number>-?\d+|\.|[AGR])?,\s*
+            Number=(?P<number>-?\d+|\.)?,\s*
             Type=(?P<type>Integer|Float|Flag|Character|String),\s*
             Description="(?P<desc>[^"]*)"
             (?:,\s*Source="(?P<source>[^"]*)")?
@@ -159,25 +156,10 @@ class _vcf_metadata_parser(object):
             ID=(?P<id>[^,]+),\s*
             Description="(?P<desc>[^"]*)"
             >''', re.VERBOSE)
-        self.alt_pattern = re.compile(r'''\#\#ALT=<
-            ID=(?P<id>[^,]+),\s*
-            Description="(?P<desc>[^"]*)"
-            >''', re.VERBOSE)
-        self.format_pattern = re.compile(r'''\#\#FORMAT=<
-            ID=(?P<id>.+),\s*
-            Number=(?P<number>-?\d+|\.|[AGR]),\s*
-            Type=(?P<type>.+),\s*
-            Description="(?P<desc>.*)"
-            >''', re.VERBOSE)
-        self.contig_pattern = re.compile(r'''\#\#contig=<
-            ID=(?P<id>[^>,]+)
-            (,.*length=(?P<length>-?\d+))?
-            .*
-            >''', re.VERBOSE)
         self.meta_pattern = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 
-    def vcf_field_count(self, num_str):
-        """Cast vcf header numbers to integer or None"""
+    def aavf_field_count(self, num_str):
+        """Cast aavf header numbers to integer or None"""
         if num_str is None:
             return None
         elif num_str not in field_counts:
@@ -193,7 +175,7 @@ class _vcf_metadata_parser(object):
             raise SyntaxError(
                 "One of the INFO lines is malformed: %s" % info_string)
 
-        num = self.vcf_field_count(match.group('number'))
+        num = self.aavf_field_count(match.group('number'))
 
         info = _Info(match.group('id'), num,
                      match.group('type'), match.group('desc'),
@@ -211,41 +193,6 @@ class _vcf_metadata_parser(object):
         filt = _Filter(match.group('id'), match.group('desc'))
 
         return (match.group('id'), filt)
-
-    def read_alt(self, alt_string):
-        '''Read a meta-information ALTline.'''
-        match = self.alt_pattern.match(alt_string)
-        if not match:
-            raise SyntaxError(
-                "One of the ALT lines is malformed: %s" % alt_string)
-
-        alt = _Alt(match.group('id'), match.group('desc'))
-
-        return (match.group('id'), alt)
-
-    def read_format(self, format_string):
-        '''Read a meta-information FORMAT line.'''
-        match = self.format_pattern.match(format_string)
-        if not match:
-            raise SyntaxError(
-                "One of the FORMAT lines is malformed: %s" % format_string)
-
-        num = self.vcf_field_count(match.group('number'))
-
-        form = _Format(match.group('id'), num,
-                       match.group('type'), match.group('desc'))
-
-        return (match.group('id'), form)
-
-    def read_contig(self, contig_string):
-        '''Read a meta-contigrmation INFO line.'''
-        match = self.contig_pattern.match(contig_string)
-        if not match:
-            raise SyntaxError(
-                "One of the contig lines is malformed: %s" % contig_string)
-        length = self.vcf_field_count(match.group('length'))
-        contig = _Contig(match.group('id'), length)
-        return (match.group('id'), contig)
 
     def read_meta_hash(self, meta_string):
         # assert re.match("##.+=<", meta_string)
