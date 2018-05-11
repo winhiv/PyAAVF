@@ -94,32 +94,7 @@ from model import _Substitution, _Breakend, _SingleBreakend, _SV
 
 # Metadata parsers/constants
 RESERVED_INFO = {
-    'AA': 'String', 'AC': 'Integer', 'AF': 'Float', 'AN': 'Integer',
-    'BQ': 'Float', 'CIGAR': 'String', 'DB': 'Flag', 'DP': 'Integer',
-    'END': 'Integer', 'H2': 'Flag', 'H3': 'Flag', 'MQ': 'Float',
-    'MQ0': 'Integer', 'NS': 'Integer', 'SB': 'String', 'SOMATIC': 'Flag',
-    'VALIDATED': 'Flag', '1000G': 'Flag',
-
-    # Keys used for structural variants
-    'IMPRECISE': 'Flag', 'NOVEL': 'Flag', 'SVTYPE': 'String',
-    'SVLEN': 'Integer', 'CIPOS': 'Integer', 'CIEND': 'Integer',
-    'HOMLEN': 'Integer', 'HOMSEQ': 'String', 'BKPTID': 'String',
-    'MEINFO': 'String', 'METRANS': 'String', 'DGVID': 'String',
-    'DBVARID': 'String', 'DBRIPID': 'String', 'MATEID': 'String',
-    'PARID': 'String', 'EVENT': 'String', 'CILEN': 'Integer',
-    'DPADJ': 'Integer', 'CN': 'Integer', 'CNADJ': 'Integer',
-    'CICN': 'Integer', 'CICNADJ': 'Integer'
-}
-
-RESERVED_FORMAT = {
-    'GT': 'String', 'DP': 'Integer', 'FT': 'String', 'GL': 'Float',
-    'GLE': 'String', 'PL': 'Integer', 'GP': 'Float', 'GQ': 'Integer',
-    'HQ': 'Integer', 'PS': 'Integer', 'PQ': 'Integer', 'EC': 'Integer',
-    'MQ': 'Integer',
-
-    # Keys used for structural variants
-    'CN': 'Integer', 'CNQ': 'Float', 'CNL': 'Float', 'NQ': 'Integer',
-    'HAP': 'Integer', 'AHAP': 'Integer'
+    'RC': 'String', 'AC': 'String', 'ACC': 'Float', 'ACF': 'Float',
 }
 
 # Spec is a bit weak on which metadata lines are singular, like fileformat
@@ -132,18 +107,16 @@ field_counts = {
 }
 
 
-_Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source', 'version'])
+_Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
+                               'version'])
 _Filter = collections.namedtuple('Filter', ['id', 'desc'])
 _Alt = collections.namedtuple('Alt', ['id', 'desc'])
-_Format = collections.namedtuple('Format', ['id', 'num', 'type', 'desc'])
-_SampleInfo = collections.namedtuple('SampleInfo', ['samples', 'gt_bases', 'gt_types', 'gt_phases'])
-_Contig = collections.namedtuple('Contig', ['id', 'length'])
 
 
 class _aavf_metadata_parser(object):
     '''Parse the metadata in the header of a AAVF file.'''
     def __init__(self):
-        super(_vcf_metadata_parser, self).__init__()
+        super(_aavf_metadata_parser, self).__init__()
         self.info_pattern = re.compile(r'''\#\#INFO=<
             ID=(?P<id>[^,]+),\s*
             Number=(?P<number>-?\d+|\.)?,\s*
@@ -245,18 +218,19 @@ class _aavf_metadata_parser(object):
 
 
 class Reader(object):
-    """ Reader for a VCF v 4.0 file, an iterator returning ``_Record objects`` """
+    """ Reader for a AACF file, an iterator returning ``_Record objects`` """
 
-    def __init__(self, fsock=None, filename=None, compressed=None, prepend_chr=False,
-                 strict_whitespace=False, encoding='ascii'):
-        """ Create a new Reader for a VCF file.
-            You must specify either fsock (stream) or filename.  Gzipped streams
-            or files are attempted to be recogized by the file extension, or gzipped
-            can be forced with ``compressed=True``
-            'prepend_chr=True' will put 'chr' before all the CHROM values, useful
-            for different sources.
-            'strict_whitespace=True' will split records on tabs only (as with VCF
-            spec) which allows you to parse files with spaces in the sample names.
+    def __init__(self, fsock=None, filename=None, compressed=None,
+                 prepend_chr=False, strict_whitespace=False, encoding='ascii'):
+        """ Create a new Reader for a AACF file.
+            You must specify either fsock (stream) or filename.  Gzipped
+            streams or files are attempted to be recogized by the file
+            extension, or gzipped can be forced with ``compressed=True``
+            'prepend_chr=True' will put 'chr' before all the CHROM values,
+            useful for different sources.
+            'strict_whitespace=True' will split records on tabs only (as with
+            AACF spec) which allows you to parse files with spaces in the
+            sample names.
         """
         super(Reader, self).__init__()
 
@@ -295,14 +269,6 @@ class Reader(object):
         self.infos = None
         #: FILTER fields from header
         self.filters = None
-        #: ALT fields from header
-        self.alts = None
-        #: FORMAT fields from header
-        self.formats = None
-        #: contig fields from header
-        self.contigs = None
-        self.samples = None
-        self._sample_indexes = None
         self._header_lines = []
         self._column_headers = []
         self._tabix = None
@@ -318,10 +284,10 @@ class Reader(object):
         '''Parse the information stored in the metainfo of the VCF.
         The end user shouldn't have to use this.  She can access the metainfo
         directly with ``self.metadata``.'''
-        for attr in ('metadata', 'infos', 'filters', 'alts', 'contigs', 'formats'):
+        for attr in ('metadata', 'infos', 'filters'):
             setattr(self, attr, OrderedDict())
 
-        parser = _vcf_metadata_parser()
+        parser = _aavf_metadata_parser()
 
         line = next(self.reader)
         while line.startswith('##'):
@@ -334,18 +300,6 @@ class Reader(object):
             elif line.startswith('##FILTER'):
                 key, val = parser.read_filter(line)
                 self.filters[key] = val
-
-            elif line.startswith('##ALT'):
-                key, val = parser.read_alt(line)
-                self.alts[key] = val
-
-            elif line.startswith('##FORMAT'):
-                key, val = parser.read_format(line)
-                self.formats[key] = val
-
-            elif line.startswith('##contig'):
-                key, val = parser.read_contig(line)
-                self.contigs[key] = val
 
             else:
                 key, val = parser.read_meta(line)
@@ -360,8 +314,6 @@ class Reader(object):
 
         fields = self._row_pattern.split(line[1:])
         self._column_headers = fields[:9]
-        self.samples = fields[9:]
-        self._sample_indexes = dict([(x,i) for (i,x) in enumerate(self.samples)])
 
     def _map(self, func, iterable, bad=['.', '']):
         '''``map``, but make bad values None.'''
@@ -419,14 +371,15 @@ class Reader(object):
                 val = True
             elif entry_type in ('String', 'Character'):
                 try:
-                    vals = entry[1].split(',') # commas are reserved characters indicating multiple values
+                    vals = entry[1].split(',')  # commas are reserved
+                    # characters indicating multiple values
                     val = self._map(str, vals)
                 except IndexError:
                     entry_type = 'Flag'
                     val = True
 
             try:
-                if self.infos[ID].num == 1 and entry_type not in ( 'Flag', ):
+                if self.infos[ID].num == 1 and entry_type not in ('Flag', ):
                     val = val[0]
             except KeyError:
                 pass
@@ -434,97 +387,6 @@ class Reader(object):
             retdict[ID] = val
 
         return retdict
-
-    def _parse_sample_format(self, samp_fmt):
-        """ Parse the format of the calls in this _Record """
-        samp_fmt = make_calldata_tuple(samp_fmt.split(':'))
-
-        for fmt in samp_fmt._fields:
-            try:
-                entry_type = self.formats[fmt].type
-                entry_num = self.formats[fmt].num
-            except KeyError:
-                entry_num = None
-                try:
-                    entry_type = RESERVED_FORMAT[fmt]
-                except KeyError:
-                    entry_type = 'String'
-            samp_fmt._types.append(entry_type)
-            samp_fmt._nums.append(entry_num)
-        return samp_fmt
-
-    def _parse_samples(self, samples, samp_fmt, site):
-        '''Parse a sample entry according to the format specified in the FORMAT
-        column.
-        NOTE: this method has a cython equivalent and care must be taken
-        to keep the two methods equivalent
-        '''
-
-        # check whether we already know how to parse this format
-        if samp_fmt not in self._format_cache:
-            self._format_cache[samp_fmt] = self._parse_sample_format(samp_fmt)
-        samp_fmt = self._format_cache[samp_fmt]
-
-        if cparse:
-            return cparse.parse_samples(
-                self.samples, samples, samp_fmt, samp_fmt._types, samp_fmt._nums, site)
-
-        samp_data = []
-        _map = self._map
-
-        nfields = len(samp_fmt._fields)
-
-        for name, sample in itertools.izip(self.samples, samples):
-
-            # parse the data for this sample
-            sampdat = [None] * nfields
-
-            for i, vals in enumerate(sample.split(':')):
-
-                # short circuit the most common
-                if samp_fmt._fields[i] == 'GT':
-                    sampdat[i] = vals
-                    continue
-                # genotype filters are a special case
-                elif samp_fmt._fields[i] == 'FT':
-                    sampdat[i] = self._parse_filter(vals)
-                    continue
-                elif not vals or vals == ".":
-                    sampdat[i] = None
-                    continue
-
-                entry_num = samp_fmt._nums[i]
-                entry_type = samp_fmt._types[i]
-
-                # we don't need to split single entries
-                if entry_num == 1:
-                    if entry_type == 'Integer':
-                        try:
-                            sampdat[i] = int(vals)
-                        except ValueError:
-                            sampdat[i] = float(vals)
-                    elif entry_type == 'Float' or entry_type == 'Numeric':
-                        sampdat[i] = float(vals)
-                    else:
-                        sampdat[i] = vals
-                    continue
-
-                vals = vals.split(',')
-                if entry_type == 'Integer':
-                    try:
-                        sampdat[i] = _map(int, vals)
-                    except ValueError:
-                        sampdat[i] = _map(float, vals)
-                elif entry_type == 'Float' or entry_type == 'Numeric':
-                    sampdat[i] = _map(float, vals)
-                else:
-                    sampdat[i] = vals
-
-            # create a call object
-            call = _Call(site, name, samp_fmt(*sampdat))
-            samp_data.append(call)
-
-        return samp_data
 
     def _parse_alt(self, str):
         if self._alt_pattern.search(str) is not None:
@@ -544,7 +406,8 @@ class Reader(object):
                 connectingSequence = items[2]
             else:
                 connectingSequence = items[0]
-            return _Breakend(chr, pos, orientation, remoteOrientation, connectingSequence, withinMainAssembly)
+            return _Breakend(chr, pos, orientation, remoteOrientation,
+                             connectingSequence, withinMainAssembly)
         elif str[0] == '.' and len(str) > 1:
             return _SingleBreakend(True, str[1:])
         elif str[-1] == '.' and len(str) > 1:
@@ -561,46 +424,29 @@ class Reader(object):
         chrom = row[0]
         if self._prepend_chr:
             chrom = 'chr' + chrom
-        pos = int(row[1])
 
-        if row[2] != '.':
-            ID = row[2]
-        else:
-            ID = None
+        gene = str(row[1])
+
+        pos = int(row[2])
 
         ref = row[3]
         alt = self._map(self._parse_alt, row[4].split(','))
 
-        try:
-            qual = int(row[5])
-        except ValueError:
-            try:
-                qual = float(row[5])
-            except ValueError:
-                qual = None
+        filt = self._parse_filter(row[5])
 
-        filt = self._parse_filter(row[6])
-        info = self._parse_info(row[7])
+        alt_freq = float(row[6])
 
-        try:
-            fmt = row[8]
-        except IndexError:
-            fmt = None
-        else:
-            if fmt == '.':
-                fmt = None
+        coverage = int(row[7])
 
-        record = _Record(chrom, pos, ID, ref, alt, qual, filt,
-                info, fmt, self._sample_indexes)
+        info = self._parse_info(row[8])
 
-        if fmt is not None:
-            samples = self._parse_samples(row[9:], fmt, record)
-            record.samples = samples
+        record = _Record(chrom, gene, pos, ref, alt, filt, alt_freq, coverage,
+                         info)
 
         return record
 
     def fetch(self, chrom, start=None, end=None):
-        """ Fetches records from a tabix-indexed VCF file and returns an
+        """ Fetches records from a tabix-indexed AAVF file and returns an
             iterable of ``_Record`` instances
             chrom must be specified.
             The start and end coordinates are in the zero-based,
@@ -641,7 +487,7 @@ class Writer(object):
     """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
 
     # Reverse keys and values in header field count dictionary
-    counts = dict((v,k) for k,v in field_counts.iteritems())
+    counts = dict((v, k) for k, v in field_counts.iteritems())
 
     def __init__(self, stream, template, lineterminator="\n"):
         self.writer = csv.writer(stream, delimiter="\t",
@@ -683,10 +529,10 @@ class Writer(object):
 
     def write_record(self, record):
         """ write a record to the file """
-        ffs = self._map(str, [record.CHROM, record.GENE, record.POS, record.REF]) \
-              + [record.ALT, self._format_filter(record.FILTER),
-                record.ALT_FREQ, record.COVERAGE,
-                self._format_info(record.INFO)]
+        ffs = self._map(str, [record.CHROM, record.GENE, record.POS]) \
+            + [record.REF, record.ALT, self._format_filter(record.FILTER),
+               record.ALT_FREQ, record.COVERAGE,
+               self._format_info(record.INFO)]
 
         self.writer.writerow(ffs)
 
@@ -722,14 +568,34 @@ class Writer(object):
     def _format_info(self, info):
         if not info:
             return '.'
+
         def order_key(field):
             # Order by header definition first, alphabetically second.
             return self.info_order[field], field
         return ';'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
 
+    def _format_sample(self, fmt, sample):
+        if hasattr(sample.data, 'GT'):
+            gt = sample.data.GT
+        else:
+            gt = './.' if 'GT' in fmt else ''
+
+        result = [gt] if gt else []
+        # Following the VCF spec, GT is always the first item whenever it is
+        # present.
+        for field in sample.data._fields:
+            value = getattr(sample.data, field)
+            if field == 'GT':
+                continue
+            if field == 'FT':
+                result.append(self._format_filter(value))
+            else:
+                result.append(self._stringify(value))
+        return ':'.join(result)
+
     def _stringify(self, x, none='.', delim=','):
-        if type(x) == type([]):
+        if type(x).isinstance(type([])):
             return delim.join(self._map(str, x, none))
         return str(x) if x is not None else none
 
@@ -745,5 +611,5 @@ class Writer(object):
 
 
 def __update_readme():
-    import sys, vcf
+    import vcf
     file('README.rst', 'w').write(vcf.__doc__)
