@@ -638,7 +638,7 @@ class Reader(object):
 
 
 class Writer(object):
-    """VCF Writer. On Windows Python 2, open stream with 'wb'."""
+    """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v,k) for k,v in field_counts.iteritems())
@@ -777,8 +777,3 @@ class Writer(object):
 def __update_readme():
     import sys, vcf
     file('README.rst', 'w').write(vcf.__doc__)
-
-
-# backwards compatibility
-VCFReader = Reader
-VCFWriter = Writer
