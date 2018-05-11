@@ -671,17 +671,8 @@ class Writer(object):
                     stream.write('##{0}={1}\n'.format(key, val))
         for line in template.infos.itervalues():
             stream.write(four.format(key="INFO", *line, num=_num(line.num)))
-        for line in template.formats.itervalues():
-            stream.write(four.format(key="FORMAT", *line, num=_num(line.num)))
         for line in template.filters.itervalues():
             stream.write(two.format(key="FILTER", *line))
-        for line in template.alts.itervalues():
-            stream.write(two.format(key="ALT", *line))
-        for line in template.contigs.itervalues():
-            if line.length:
-                stream.write('##contig=<ID={0},length={1}>\n'.format(*line))
-            else:
-                stream.write('##contig=<ID={0}>\n'.format(*line))
 
         self._write_header()
 
@@ -692,15 +683,12 @@ class Writer(object):
 
     def write_record(self, record):
         """ write a record to the file """
-        ffs = self._map(str, [record.CHROM, record.POS, record.ID, record.REF]) \
-              + [self._format_alt(record.ALT), record.QUAL or '.', self._format_filter(record.FILTER),
-                 self._format_info(record.INFO)]
-        if record.FORMAT:
-            ffs.append(record.FORMAT)
+        ffs = self._map(str, [record.CHROM, record.GENE, record.POS, record.REF]) \
+              + [record.ALT, self._format_filter(record.FILTER),
+                record.ALT_FREQ, record.COVERAGE,
+                self._format_info(record.INFO)]
 
-        samples = [self._format_sample(record.FORMAT, sample)
-            for sample in record.samples]
-        self.writer.writerow(ffs + samples)
+        self.writer.writerow(ffs)
 
     def flush(self):
         """Flush the writer"""
@@ -739,24 +727,6 @@ class Writer(object):
             return self.info_order[field], field
         return ';'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
-
-    def _format_sample(self, fmt, sample):
-        if hasattr(sample.data, 'GT'):
-            gt = sample.data.GT
-        else:
-            gt = './.' if 'GT' in fmt else ''
-
-        result = [gt] if gt else []
-        # Following the VCF spec, GT is always the first item whenever it is present.
-        for field in sample.data._fields:
-            value = getattr(sample.data,field)
-            if field == 'GT':
-                continue
-            if field == 'FT':
-                result.append(self._format_filter(value))
-            else:
-                result.append(self._stringify(value))
-        return ':'.join(result)
 
     def _stringify(self, x, none='.', delim=','):
         if type(x) == type([]):
