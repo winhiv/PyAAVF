@@ -506,25 +506,6 @@ class Writer(object):
         return ';'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
 
-    def _format_sample(self, fmt, sample):
-        if hasattr(sample.data, 'GT'):
-            gt = sample.data.GT
-        else:
-            gt = './.' if 'GT' in fmt else ''
-
-        result = [gt] if gt else []
-        # Following the VCF spec, GT is always the first item whenever it is
-        # present.
-        for field in sample.data._fields:
-            value = getattr(sample.data, field)
-            if field == 'GT':
-                continue
-            if field == 'FT':
-                result.append(self._format_filter(value))
-            else:
-                result.append(self._stringify(value))
-        return ':'.join(result)
-
     def _stringify(self, x, none='.', delim=','):
         if type(x).isinstance(type([])):
             return delim.join(self._map(str, x, none))
