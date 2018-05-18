@@ -133,34 +133,35 @@ class _aavf_metadata_parser(object):
         # N.B., items can have quoted values, so cannot just split on comma
         val = OrderedDict()
         state = 0
-        k = ''
-        v = ''
-        for c in items[1].strip('[<>]'):
+        item_key = ''  # the key of an item such as ID, Number, or Type
+        item_val = ''  # the value of an item corresponding to its key
+
+        for ch in items[1].strip('[<>]'):
 
             if state == 0:  # reading item key
-                if c == '=':
+                if ch == '=':
                     state = 1  # end of key, start reading value
                 else:
-                    k += c  # extend key
+                    item_key += ch  # extend key
             elif state == 1:  # reading item value
-                if v == '' and c == '"':
-                    v += c  # include quote mark in value
+                if item_val == '' and ch == '"':
+                    item_val += ch  # include quote mark in value
                     state = 2  # start reading quoted value
-                elif c == ',':
-                    val[k] = v  # store parsed item
+                elif ch == ',':
+                    val[item_key] = item_val  # store parsed item
                     state = 0  # read next key
-                    k = ''
-                    v = ''
+                    item_key = ''
+                    item_val = ''
                 else:
-                    v += c
+                    item_val += ch
             elif state == 2:  # reading quoted item value
-                if c == '"':
-                    v += c  # include quote mark in value
+                if ch == '"':
+                    item_val += ch  # include quote mark in value
                     state = 1  # end quoting
                 else:
-                    v += c
-        if k != '':
-            val[k] = v
+                    item_val += ch
+        if item_key != '':
+            val[item_key] = item_val
         return key, val
 
     def read_meta(self, meta_string):
@@ -455,7 +456,6 @@ class Writer(object):
         self._write_header()
 
     def _write_header(self):
-        # TODO: write INFO, etc
         self.stream.write('#' + '\t'.join(self.template.column_headers) + '\n')
 
     def write_record(self, record):
