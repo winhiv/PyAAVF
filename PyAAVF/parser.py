@@ -235,7 +235,7 @@ class Reader(object):
         return self
 
     def _parse_metainfo(self):
-        '''Parse the information stored in the metainfo of the VCF.
+        '''Parse the information stored in the metainfo of the AAVF.
         The end user shouldn't have to use this.  She can access the metainfo
         directly with ``self.metadata``.'''
         for attr in ('metadata', 'infos', 'filters'):
@@ -267,7 +267,7 @@ class Reader(object):
             line = next(self.reader)
 
         if not line:
-            raise Exception("Unable to parse header line in VCF file.")
+            raise Exception("Unable to parse header line in AAVF file.")
         else:
             fields = self._row_pattern.split(line[1:])
             self.column_headers = fields[:9]
@@ -278,7 +278,7 @@ class Reader(object):
                 for x in iterable]
 
     def _parse_filter(self, filt_str):
-        '''Parse the FILTER field of a VCF entry into a Python list
+        '''Parse the FILTER field of a AAVF entry into a Python list
         NOTE: this method has a cython equivalent and care must be taken
         to keep the two methods equivalent
         '''
@@ -290,7 +290,7 @@ class Reader(object):
             return filt_str.split(';')
 
     def _parse_info(self, info_str):
-        '''Parse the INFO field of a VCF entry into a dictionary of Python
+        '''Parse the INFO field of a AAVF entry into a dictionary of Python
         types.
         '''
         if info_str == '.':

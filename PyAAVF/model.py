@@ -24,7 +24,10 @@ specific language governing permissions and limitations under the License.
 
 
 class _Record(object):
-    """ Equivalent to a row in an AAVF file."""
+    """ Equivalent to a row in an AAVF file.
+        The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,
+        COVERAGE and INFO are available as properties.
+    """
 
     def __init__(self, CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ, COVERAGE,
                  INFO):
@@ -39,9 +42,38 @@ class _Record(object):
         self.COVERAGE = COVERAGE
         self.INFO = INFO
 
+    # For Python 2
+    def __cmp__(self, other):
+        """__cmp___"""
+        return cmp((self.CHROM, self.POS),
+                   (getattr(other, "CHROM", None),
+                    getattr(other, "POS", None)))
+
+    # For Python 3
+    def __eq__(self, other):
+        """ _Records are equal if they describe the same variant (same position, amino acids) """
+        return (self.CHROM == getattr(other, "CHROM", None) and
+                self.POS == getattr(other, "POS", None) and
+                self.REF == getattr(other, "REF", None) and
+                self.ALT == getattr(other, "ALT", None))
+
+    # For Python 3
+    def __lt__(self, other):
+        """__lt__"""
+        lhs = (self.CHROM, self.POS)
+        rhs = (getattr(other, "CHROM", None), getattr(other, "POS", None))
+        return lhs < rhs
+
     def __str__(self):
         """str"""
         return "Record(CHROM=%(CHROM)s, GENE=%(GENE)s, POS=%(POS)s, REF=%(REF)s" % self.__dict__
+
+    def add_filter(self, flt):
+        """add filter"""
+        if self.FILTER is None:
+            self.FILTER = [flt]
+        else:
+            self.FILTER.append(flt)
 
     def add_info(self, info, value=True):
         """add_info"""
