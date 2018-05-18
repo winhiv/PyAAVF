@@ -45,7 +45,7 @@ try:
 except ImportError:
     cparse = None
 
-from model import _Record
+from PyAAVF.model import _Record
 
 
 # Metadata parsers/constants
@@ -58,13 +58,13 @@ RESERVED_INFO = {
 SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference']
 
 # Conversion between value in file and Python value
-field_counts = {
+FIELD_COUNTS = {
     '.': None,  # Unknown number of values
 }
 
 
 _Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
-                               'version'])
+                                        'version'])
 _Filter = collections.namedtuple('Filter', ['id', 'desc'])
 _Alt = collections.namedtuple('Alt', ['id', 'desc'])
 
@@ -91,11 +91,11 @@ class _aavf_metadata_parser(object):
         """Cast aavf header numbers to integer or None"""
         if num_str is None:
             return None
-        elif num_str not in field_counts:
+        elif num_str not in FIELD_COUNTS:
             # Fixed, specified number
             return int(num_str)
         else:
-            return field_counts[num_str]
+            return FIELD_COUNTS[num_str]
 
     def read_info(self, info_string):
         '''Read a meta-information INFO line.'''
@@ -124,6 +124,8 @@ class _aavf_metadata_parser(object):
         return (match.group('id'), filt)
 
     def read_meta_hash(self, meta_string):
+        '''Read meta hash (helper function for read_meta)'''
+
         # assert re.match("##.+=<", meta_string)
         items = meta_string.split('=', 1)
         # Removing initial hash marks
@@ -162,6 +164,7 @@ class _aavf_metadata_parser(object):
         return key, val
 
     def read_meta(self, meta_string):
+        '''read_meta'''
         if re.match("##.+=<", meta_string):
             return self.read_meta_hash(meta_string)
         match = self.meta_pattern.match(meta_string)
@@ -215,18 +218,17 @@ class Reader(object):
             self._separator = '\t| +'
 
         self._row_pattern = re.compile(self._separator)
-        self._alt_pattern = re.compile('[\[\]]')
 
         self.reader = (line.strip() for line in self._reader if line.strip())
 
         #: metadata fields from header (string or hash, depending)
-        self.metadata = None
+        self.metadata = {}
         #: INFO fields from header
-        self.infos = None
+        self.infos = {}
         #: FILTER fields from header
-        self.filters = None
+        self.filters = {}
         self._header_lines = []
-        self._column_headers = []
+        self.column_headers = []
         self._tabix = None
         self._prepend_chr = prepend_chr
         self._parse_metainfo()
@@ -268,8 +270,11 @@ class Reader(object):
 
             line = next(self.reader)
 
-        fields = self._row_pattern.split(line[1:])
-        self._column_headers = fields[:9]
+        if not line:
+            raise Exception("Unable to parse header line in VCF file.")
+        else:
+            fields = self._row_pattern.split(line[1:])
+            self.column_headers = fields[:9]
 
     def _map(self, func, iterable, bad=['.', '']):
         '''``map``, but make bad values None.'''
@@ -414,7 +419,7 @@ class Writer(object):
     """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
 
     # Reverse keys and values in header field count dictionary
-    counts = dict((v, k) for k, v in field_counts.iteritems())
+    counts = dict((v, k) for k, v in FIELD_COUNTS.iteritems())
 
     def __init__(self, stream, template, lineterminator="\n"):
         self.writer = csv.writer(stream, delimiter="\t",
@@ -451,8 +456,7 @@ class Writer(object):
 
     def _write_header(self):
         # TODO: write INFO, etc
-        self.stream.write('#' + '\t'.join(self.template._column_headers
-                                          + self.template.samples) + '\n')
+        self.stream.write('#' + '\t'.join(self.template.column_headers) + '\n')
 
     def write_record(self, record):
         """ write a record to the file """
@@ -497,7 +501,7 @@ class Writer(object):
             return '.'
 
         def order_key(field):
-            # Order by header definition first, alphabetically second.
+            '''Order by header definition first, alphabetically second.'''
             return self.info_order[field], field
         return ';'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
@@ -538,5 +542,5 @@ class Writer(object):
 
 
 def __update_readme():
-    import vcf
-    file('README.rst', 'w').write(vcf.__doc__)
+    import PyAAVF
+    file('README.rst', 'w').write(PyAAVF.__doc__)
