@@ -40,11 +40,6 @@ try:
 except ImportError:
     pysam = None
 
-try:
-    import cparse
-except ImportError:
-    cparse = None
-
 from PyAAVF.model import _Record
 
 
@@ -69,10 +64,10 @@ _Filter = collections.namedtuple('Filter', ['id', 'desc'])
 _Alt = collections.namedtuple('Alt', ['id', 'desc'])
 
 
-class _aavf_metadata_parser(object):
+class _aavfMetadataParser(object):
     '''Parse the metadata in the header of a AAVF file.'''
     def __init__(self):
-        super(_aavf_metadata_parser, self).__init__()
+        super(_aavfMetadataParser, self).__init__()
         self.info_pattern = re.compile(r'''\#\#INFO=<
             ID=(?P<id>[^,]+),\s*
             Number=(?P<number>-?\d+|\.)?,\s*
@@ -136,30 +131,30 @@ class _aavf_metadata_parser(object):
         item_key = ''  # the key of an item such as ID, Number, or Type
         item_val = ''  # the value of an item corresponding to its key
 
-        for ch in items[1].strip('[<>]'):
+        for curr_char in items[1].strip('[<>]'):
 
             if state == 0:  # reading item key
-                if ch == '=':
+                if curr_char == '=':
                     state = 1  # end of key, start reading value
                 else:
-                    item_key += ch  # extend key
+                    item_key += curr_char  # extend key
             elif state == 1:  # reading item value
-                if item_val == '' and ch == '"':
-                    item_val += ch  # include quote mark in value
+                if item_val == '' and curr_char == '"':
+                    item_val += curr_char  # include quote mark in value
                     state = 2  # start reading quoted value
-                elif ch == ',':
+                elif curr_char == ',':
                     val[item_key] = item_val  # store parsed item
                     state = 0  # read next key
                     item_key = ''
                     item_val = ''
                 else:
-                    item_val += ch
+                    item_val += curr_char
             elif state == 2:  # reading quoted item value
-                if ch == '"':
-                    item_val += ch  # include quote mark in value
+                if curr_char == '"':
+                    item_val += curr_char  # include quote mark in value
                     state = 1  # end quoting
                 else:
-                    item_val += ch
+                    item_val += curr_char
         if item_key != '':
             val[item_key] = item_val
         return key, val
@@ -178,18 +173,18 @@ class _aavf_metadata_parser(object):
 
 
 class Reader(object):
-    """ Reader for a AACF file, an iterator returning ``_Record objects`` """
+    """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
 
     def __init__(self, fsock=None, filename=None, compressed=None,
                  prepend_chr=False, strict_whitespace=False, encoding='ascii'):
-        """ Create a new Reader for a AACF file.
+        """ Create a new Reader for a AAVF file.
             You must specify either fsock (stream) or filename.  Gzipped
             streams or files are attempted to be recogized by the file
             extension, or gzipped can be forced with ``compressed=True``
             'prepend_chr=True' will put 'chr' before all the CHROM values,
             useful for different sources.
-            'strict_whitespace=True' will split records on tabs only (as with
-            AACF spec) which allows you to parse files with spaces in the
+            'strict_whitespace=True' will split records on tabs only
+            which allows you to parse files with spaces in the
             sample names.
         """
         super(Reader, self).__init__()
@@ -246,7 +241,7 @@ class Reader(object):
         for attr in ('metadata', 'infos', 'filters'):
             setattr(self, attr, OrderedDict())
 
-        parser = _aavf_metadata_parser()
+        parser = _aavfMetadataParser()
 
         line = next(self.reader)
         while line.startswith('##'):
@@ -306,12 +301,12 @@ class Reader(object):
 
         for entry in entries:
             entry = entry.split('=', 1)
-            ID = entry[0]
+            info_id = entry[0]
             try:
-                entry_type = self.infos[ID].type
+                entry_type = self.infos[info_id].type
             except KeyError:
                 try:
-                    entry_type = RESERVED_INFO[ID]
+                    entry_type = RESERVED_INFO[info_id]
                 except KeyError:
                     if entry[1:]:
                         entry_type = 'String'
@@ -341,12 +336,12 @@ class Reader(object):
                     val = True
 
             try:
-                if self.infos[ID].num == 1 and entry_type not in ('Flag', ):
+                if self.infos[info_id].num == 1 and entry_type not in ('Flag', ):
                     val = val[0]
             except KeyError:
                 pass
 
-            retdict[ID] = val
+            retdict[info_id] = val
 
         return retdict
 
@@ -460,8 +455,8 @@ class Writer(object):
 
     def write_record(self, record):
         """ write a record to the file """
-        ffs = self._map(str, [record.CHROM, record.GENE, record.POS]) \
-            + [record.REF, record.ALT, self._format_filter(record.FILTER),
+        ffs = self._map(str, [record.CHROM, record.GENE, record.POS, record.REF]) \
+            + [record.ALT, self._format_filter(record.FILTER),
                record.ALT_FREQ, record.COVERAGE,
                self._format_info(record.INFO)]
 
@@ -506,20 +501,21 @@ class Writer(object):
         return ';'.join(self._stringify_pair(f, info[f]) for f in
                         sorted(info, key=order_key))
 
-    def _stringify(self, x, none='.', delim=','):
-        if type(x).isinstance(type([])):
-            return delim.join(self._map(str, x, none))
-        return str(x) if x is not None else none
+    def _stringify(self, x_var, none='.', delim=','):
+        if type(x_var).isinstance(type([])):
+            return delim.join(self._map(str, x_var, none))
+        return str(x_var) if x_var is not None else none
 
-    def _stringify_pair(self, x, y, none='.', delim=','):
-        if isinstance(y, bool):
-            return str(x) if y else ""
-        return "%s=%s" % (str(x), self._stringify(y, none=none, delim=delim))
+    def _stringify_pair(self, x_var, y_var, none='.', delim=','):
+        if isinstance(y_var, bool):
+            return str(x_var) if y_var else ""
+        return "%s=%s" % (str(x_var),
+                          self._stringify(y_var, none=none, delim=delim))
 
     def _map(self, func, iterable, none='.'):
         '''``map``, but make None values none.'''
-        return [func(x) if x is not None else none
-                for x in iterable]
+        return [func(x_var) if x_var is not None else none
+                for x_var in iterable]
 
 
 def __update_readme():
