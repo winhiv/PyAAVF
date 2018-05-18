@@ -45,7 +45,7 @@ from PyAAVF.model import _Record
 
 # Metadata parsers/constants
 RESERVED_INFO = {
-    'RC': 'String', 'AC': 'String', 'ACC': 'Float', 'ACF': 'Float',
+    'RC': 'String', 'AC': 'String', 'ACC': 'Integer', 'ACF': 'Float',
 }
 
 # Spec is a bit weak on which metadata lines are singular, like fileformat
