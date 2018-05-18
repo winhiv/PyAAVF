@@ -502,7 +502,7 @@ class Writer(object):
                         sorted(info, key=order_key))
 
     def _stringify(self, x_var, none='.', delim=','):
-        if type(x_var).isinstance(type([])):
+        if isinstance(x_var, list):
             return delim.join(self._map(str, x_var, none))
         return str(x_var) if x_var is not None else none
 
