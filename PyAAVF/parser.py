@@ -27,7 +27,6 @@ import collections
 import csv
 import gzip
 import itertools
-import os
 import re
 import sys
 
