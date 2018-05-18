@@ -46,8 +46,7 @@ try:
 except ImportError:
     cparse = None
 
-from model import _Call, _Record, make_calldata_tuple
-from model import _Substitution, _Breakend, _SingleBreakend, _SV
+from model import _Record
 
 
 # Metadata parsers/constants
@@ -346,35 +345,6 @@ class Reader(object):
 
         return retdict
 
-    def _parse_alt(self, str):
-        if self._alt_pattern.search(str) is not None:
-            # Paired breakend
-            items = self._alt_pattern.split(str)
-            remoteCoords = items[1].split(':')
-            chr = remoteCoords[0]
-            if chr[0] == '<':
-                chr = chr[1:-1]
-                withinMainAssembly = False
-            else:
-                withinMainAssembly = True
-            pos = remoteCoords[1]
-            orientation = (str[0] == '[' or str[0] == ']')
-            remoteOrientation = (re.search('\[', str) is not None)
-            if orientation:
-                connectingSequence = items[2]
-            else:
-                connectingSequence = items[0]
-            return _Breakend(chr, pos, orientation, remoteOrientation,
-                             connectingSequence, withinMainAssembly)
-        elif str[0] == '.' and len(str) > 1:
-            return _SingleBreakend(True, str[1:])
-        elif str[-1] == '.' and len(str) > 1:
-            return _SingleBreakend(False, str[:-1])
-        elif str[0] == "<" and str[-1] == ">":
-            return _SV(str[1:-1])
-        else:
-            return _Substitution(str)
-
     def next(self):
         '''Return the next record in the file.'''
         line = next(self.reader)
@@ -388,7 +358,7 @@ class Reader(object):
         pos = int(row[2])
 
         ref = row[3]
-        alt = self._map(self._parse_alt, row[4].split(','))
+        alt = row[4].split(',')
 
         filt = self._parse_filter(row[5])
 
