@@ -118,58 +118,15 @@ class _aavfMetadataParser(object):
 
         return (match.group('id'), filt)
 
-    def read_meta_hash(self, meta_string):
-        '''Read meta hash (helper function for read_meta)'''
-
-        # assert re.match("##.+=<", meta_string)
-        items = meta_string.split('=', 1)
-        # Removing initial hash marks
-        key = items[0].lstrip('#')
-        # N.B., items can have quoted values, so cannot just split on comma
-        val = OrderedDict()
-        state = 0
-        item_key = ''  # the key of an item such as ID, Number, or Type
-        item_val = ''  # the value of an item corresponding to its key
-
-        for curr_char in items[1].strip('[<>]'):
-
-            if state == 0:  # reading item key
-                if curr_char == '=':
-                    state = 1  # end of key, start reading value
-                else:
-                    item_key += curr_char  # extend key
-            elif state == 1:  # reading item value
-                if item_val == '' and curr_char == '"':
-                    item_val += curr_char  # include quote mark in value
-                    state = 2  # start reading quoted value
-                elif curr_char == ',':
-                    val[item_key] = item_val  # store parsed item
-                    state = 0  # read next key
-                    item_key = ''
-                    item_val = ''
-                else:
-                    item_val += curr_char
-            elif state == 2:  # reading quoted item value
-                if curr_char == '"':
-                    item_val += curr_char  # include quote mark in value
-                    state = 1  # end quoting
-                else:
-                    item_val += curr_char
-        if item_key != '':
-            val[item_key] = item_val
-        return key, val
-
     def read_meta(self, meta_string):
-        '''read_meta'''
-        if re.match("##.+=<", meta_string):
-            return self.read_meta_hash(meta_string)
+        '''Read a meta-information META line.'''
         match = self.meta_pattern.match(meta_string)
         if not match:
             # Spec only allows key=value, but we try to be liberal and
             # interpret anything else as key=none (and all values are parsed
             # as strings).
             return meta_string.lstrip('#'), 'none'
-        return match.group('key'), match.group('val')
+        return (match.group('key'), match.group('val'))
 
 
 class Reader(object):

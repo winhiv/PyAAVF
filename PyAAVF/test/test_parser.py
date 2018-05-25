@@ -65,13 +65,16 @@ class TestInfoOrder():
             fields = [f.split('=')[0] for f in line.split('\t')[7].split(';')]
             self._assert_order(definitions, fields)
 
-class TestInfoTypeCharacter(unittest.TestCase):
+class TestInfoTypeCharacter():
     def test_parse(self):
         reader = parser.Reader(fh('sample.aavf'))
         record = next(reader)
-        self.assertEqual(record.INFO['RC'], 'tca')
-        self.assertEqual(record.INFO['AC'], 'tAa')
-        self.assertEqual(record.INFO['ACF'], [0.0031])
+        assert record.INFO['RC'] == 'tca'
+        # the below two RESERVED_INFO constants in the INFO fields have a
+        # number of possible values that varies ior is unbounded. Thus, a list
+        # is returned.
+        assert record.INFO['AC'] == ['tAa']
+        assert record.INFO['ACF'] == [0.0031]
 
     def test_write(self):
         reader = parser.Reader(fh('sample.aavf'))
@@ -86,4 +89,4 @@ class TestInfoTypeCharacter(unittest.TestCase):
         reader2 = parser.Reader(out)
 
         for l, r in zip(records, reader2):
-            self.assertEquals(l.INFO, r.INFO)
+            assert l.INFO == r.INFO
