@@ -21,30 +21,35 @@ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-"""
-Utilities for AAVF files.
-"""
 
-from StringIO import StringIO
+import os
 import PyAAVF.parser as parser
 import PyAAVF.utils as utils
-import os
 
-class TestUtils():
+# pylint: disable=no-self-use
+class TestUtils(object):
+    """
+    Utilities for AAVF files.
+    """
 
-    def fh(self, fname, mode='rt'):
+    def fhandle(self, fname, mode='rt'):
+        """Return an open file handle."""
         return open(os.path.join(os.path.dirname(__file__), fname), mode)
 
     def test_walk(self):
+        """
+        Walk through three readers simultaneously and make sure that the
+        output is identical.
+        """
         # easy case: all same sites
-        reader1 = parser.Reader(self.fh('sample.aavf'))
-        reader2 = parser.Reader(self.fh('sample.aavf'))
-        reader3 = parser.Reader(self.fh('sample.aavf'))
+        reader1 = parser.Reader(self.fhandle('sample.aavf'))
+        reader2 = parser.Reader(self.fhandle('sample.aavf'))
+        reader3 = parser.Reader(self.fhandle('sample.aavf'))
 
-        n = 0
-        for x in utils.walk_together(reader1, reader2, reader3):
-            assert len(x) == 3
-            assert x[0] == x[1]
-            assert x[1] == x[2]
-            n += 1
-        assert n == 7
+        number = 0
+        for trio in utils.walk_together(reader1, reader2, reader3):
+            assert len(trio) == 3
+            assert trio[0] == trio[1]
+            assert trio[1] == trio[2]
+            number += 1
+        assert number == 7

@@ -28,7 +28,7 @@ class _Record(object):
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,
         COVERAGE and INFO are available as properties.
     """
-
+    # pylint: disable=invalid-name,too-many-instance-attributes,too-many-arguments
     def __init__(self, CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ, COVERAGE,
                  INFO):
         """init"""
@@ -103,6 +103,7 @@ class _Record(object):
         """add_info"""
         self.INFO[info] = value
 
+    # pylint: disable=no-else-return
     @property
     def is_filtered(self):
         """ Return True if a variant has been filtered """

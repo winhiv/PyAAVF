@@ -23,17 +23,20 @@ specific language governing permissions and limitations under the License.
 """
 
 from StringIO import StringIO
-import PyAAVF.parser as parser
 import os
+import PyAAVF.parser as parser
 
+# pylint: disable=no-self-use,too-few-public-methods
 
-def fh(fname, mode='rt'):
+def fhandle(fname, mode='rt'):
+    """Return an open file handle."""
     return open(os.path.join(os.path.dirname(__file__), fname), mode)
 
-class TestAAVFSpecs():
-
+class TestAAVFSpecs(object):
+    """Test whether the AAVF file can be walked through."""
     def test_aavf_1_0(self):
-        reader = parser.Reader(fh('sample.aavf'))
+        """Test with AAVF Version 1.0"""
+        reader = parser.Reader(fhandle('sample.aavf'))
         assert reader.metadata['fileformat'] == 'AAVFv1.0'
 
         # test we can walk the file at least
@@ -44,8 +47,8 @@ class TestAAVFSpecs():
             else:
                 assert line.is_filtered
 
-class TestInfoOrder():
-
+class TestInfoOrder(object):
+    """Test whether items referenced in INFO metadata are ordered correctly"""
     def _assert_order(self, definitions, fields):
         """
         Elements common to both lists should be in the same order. Elements
@@ -61,7 +64,7 @@ class TestInfoOrder():
         definition in the header and undefined fields should be last and in
         alphabetical order.
         """
-        reader = parser.Reader(fh('sample.aavf', 'r'))
+        reader = parser.Reader(fhandle('sample.aavf', 'r'))
         out = StringIO()
         writer = parser.Writer(out, reader, lineterminator='\n')
 
@@ -79,9 +82,11 @@ class TestInfoOrder():
             fields = [f.split('=')[0] for f in line.split('\t')[7].split(';')]
             self._assert_order(definitions, fields)
 
-class TestInfoTypeCharacter():
+class TestInfoTypeCharacter(object):
+    """Perfom tests to make sure INFO section is parser and written correctly"""
     def test_parse(self):
-        reader = parser.Reader(fh('sample.aavf'))
+        """Test whether the INFO section can be parsed correctly."""
+        reader = parser.Reader(fhandle('sample.aavf'))
         record = next(reader)
         assert record.INFO['RC'] == 'tca'
         # the below two RESERVED_INFO constants in the INFO fields have a
@@ -91,7 +96,8 @@ class TestInfoTypeCharacter():
         assert record.INFO['ACF'] == [0.0031]
 
     def test_write(self):
-        reader = parser.Reader(fh('sample.aavf'))
+        """Test whether the INFO section can be written correctly."""
+        reader = parser.Reader(fhandle('sample.aavf'))
         out = StringIO()
         writer = parser.Writer(out, reader)
 
@@ -102,5 +108,5 @@ class TestInfoTypeCharacter():
         out.seek(0)
         reader2 = parser.Reader(out)
 
-        for l, r in zip(records, reader2):
-            assert l.INFO == r.INFO
+        for left, right in zip(records, reader2):
+            assert left.INFO == right.INFO

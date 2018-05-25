@@ -24,16 +24,15 @@ specific language governing permissions and limitations under the License.
 
 import codecs
 import collections
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 import csv
 import gzip
 import itertools
 import re
 import sys
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
 
 from PyAAVF.model import _Record
 
@@ -77,8 +76,10 @@ class _aavfMetadataParser(object):
             >''', re.VERBOSE)
         self.meta_pattern = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 
+    # pylint: disable=no-self-use
     def aavf_field_count(self, num_str):
         """Cast aavf header numbers to integer or None"""
+        # pylint: disable=no-else-return
         if num_str is None:
             return None
         elif num_str not in FIELD_COUNTS:
@@ -124,6 +125,7 @@ class _aavfMetadataParser(object):
         return (match.group('key'), match.group('val'))
 
 
+# pylint: disable=too-many-instance-attributes,too-many-arguments
 class Reader(object):
     """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
 
@@ -221,14 +223,17 @@ class Reader(object):
         if not line:
             raise Exception("Unable to parse header line in AAVF file.")
         else:
+            # pylint: disable=dangerous-default-value
             fields = self._row_pattern.split(line[1:])
             self.column_headers = fields[:9]
 
+    # pylint: disable=dangerous-default-value,no-self-use
     def _map(self, func, iterable, bad=['.', '']):
         '''``map``, but make bad values None.'''
         return [func(x) if x not in bad else None
                 for x in iterable]
 
+    # pylint: disable=no-self-use,no-else-return
     def _parse_filter(self, filt_str):
         '''Parse the FILTER field of a AAVF entry into a Python list
         NOTE: this method has a cython equivalent and care must be taken
@@ -241,6 +246,7 @@ class Reader(object):
         else:
             return filt_str.split(';')
 
+    # pylint: disable=too-many-branches
     def _parse_info(self, info_str):
         '''Parse the INFO field of a AAVF entry into a dictionary of Python
         types.
@@ -391,6 +397,7 @@ class Writer(object):
         except AttributeError:
             pass
 
+    # pylint: disable=no-else-return
     def _fix_field_count(self, num_str):
         """Restore header number to original state"""
         if num_str not in self.counts:
@@ -427,6 +434,7 @@ class Writer(object):
         return "%s=%s" % (str(x_var),
                           self._stringify(y_var, none=none, delim=delim))
 
+    # pylint: disable=no-self-use
     def _map(self, func, iterable, none='.'):
         '''``map``, but make None values none.'''
         return [func(x_var) if x_var is not None else none
