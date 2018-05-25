@@ -330,43 +330,6 @@ class Reader(object):
 
         return record
 
-    def fetch(self, chrom, start=None, end=None):
-        """ Fetches records from a tabix-indexed AAVF file and returns an
-            iterable of ``_Record`` instances
-            chrom must be specified.
-            The start and end coordinates are in the zero-based,
-            half-open coordinate system, similar to ``_Record.start`` and
-            ``_Record.end``. The very first base of a chromosome is
-            index 0, and the the region includes bases up to, but not
-            including the base at the end coordinate. For example
-            ``fetch('4', 10, 20)`` would include all variants
-            overlapping a 10 base pair region from the 11th base of
-            through the 20th base (which is at index 19) of chromosome
-            4. It would not include the 21st base (at index 20). See
-            http://genomewiki.ucsc.edu/index.php/Coordinate_Transforms
-            for more information on the zero-based, half-open coordinate
-            system.
-            If end is omitted, all variants from start until the end of
-            the chromosome chrom will be included.
-            If start and end are omitted, all variants on chrom will be
-            returned.
-            requires pysam
-        """
-        if not pysam:
-            raise Exception('pysam not available, try "pip install pysam"?')
-        if not self.filename:
-            raise Exception('Please provide a filename (or a "normal" fsock)')
-
-        if not self._tabix:
-            self._tabix = pysam.Tabixfile(self.filename,
-                                          encoding=self.encoding)
-
-        if self._prepend_chr and chrom[:3] == 'chr':
-            chrom = chrom[3:]
-
-        self.reader = self._tabix.fetch(chrom, start, end)
-        return self
-
 
 class Writer(object):
     """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
