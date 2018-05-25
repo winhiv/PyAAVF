@@ -30,6 +30,20 @@ import os
 def fh(fname, mode='rt'):
     return open(os.path.join(os.path.dirname(__file__), fname), mode)
 
+class TestAAVFSpecs():
+
+    def test_aavf_1_0(self):
+        reader = parser.Reader(fh('sample.aavf'))
+        assert reader.metadata['fileformat'] == 'AAVFv1.0'
+
+        # test we can walk the file at least
+        for line in reader:
+
+            if line.POS == 103:
+                assert not line.is_filtered
+            else:
+                assert line.is_filtered
+
 class TestInfoOrder():
 
     def _assert_order(self, definitions, fields):
