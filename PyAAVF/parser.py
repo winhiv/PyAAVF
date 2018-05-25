@@ -35,11 +35,6 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-try:
-    import pysam
-except ImportError:
-    pysam = None
-
 from PyAAVF.model import _Record
 
 
