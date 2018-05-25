@@ -64,3 +64,26 @@ class TestInfoOrder():
                 continue
             fields = [f.split('=')[0] for f in line.split('\t')[7].split(';')]
             self._assert_order(definitions, fields)
+
+class TestInfoTypeCharacter(unittest.TestCase):
+    def test_parse(self):
+        reader = parser.Reader(fh('sample.aavf'))
+        record = next(reader)
+        self.assertEqual(record.INFO['RC'], 'tca')
+        self.assertEqual(record.INFO['AC'], 'tAa')
+        self.assertEqual(record.INFO['ACF'], [0.0031])
+
+    def test_write(self):
+        reader = parser.Reader(fh('sample.aavf'))
+        out = StringIO()
+        writer = parser.Writer(out, reader)
+
+        records = list(reader)
+
+        for record in records:
+            writer.write_record(record)
+        out.seek(0)
+        reader2 = parser.Reader(out)
+
+        for l, r in zip(records, reader2):
+            self.assertEquals(l.INFO, r.INFO)
