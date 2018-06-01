@@ -235,10 +235,8 @@ class Reader(object):
     # pylint: disable=no-self-use,no-else-return
     def _parse_filter(self, filt_str):
         '''Parse the FILTER field of a AAVF entry into a Python list
-        NOTE: this method has a cython equivalent and care must be taken
-        to keep the two methods equivalent
         '''
-        if filt_str == '.':
+        if filt_str == '.':  # if set to the missing value
             return None
         elif filt_str == 'PASS':
             return []
@@ -250,7 +248,7 @@ class Reader(object):
         '''Parse the INFO field of a AAVF entry into a dictionary of Python
         types.
         '''
-        if info_str == '.':
+        if info_str == '.':  # if set to the missing value
             return {}
 
         entries = info_str.split(';')
