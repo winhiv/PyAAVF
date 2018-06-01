@@ -185,7 +185,8 @@ class Reader(object):
         self.encoding = encoding
 
     def __iter__(self):
-        return self
+        while True:
+            yield next()
 
     def _parse_metainfo(self):
         '''Parse the information stored in the metainfo of the AAVF.
@@ -333,7 +334,7 @@ class Writer(object):
     """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
 
     # Reverse keys and values in header field count dictionary
-    counts = dict((v, k) for k, v in FIELD_COUNTS.iteritems())
+    counts = dict((v, k) for k, v in FIELD_COUNTS.items())
 
     def __init__(self, stream, template, lineterminator="\n"):
         self.writer = csv.writer(stream, delimiter="\t",
@@ -440,4 +441,4 @@ class Writer(object):
 
 def __update_readme():
     import PyAAVF
-    file('README.rst', 'w').write(PyAAVF.__doc__)
+    open('README.rst', 'w').write(PyAAVF.__doc__)

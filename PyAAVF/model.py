@@ -42,14 +42,6 @@ class _Record(object):
         self.COVERAGE = COVERAGE
         self.INFO = INFO
 
-    # For Python 2
-    def __cmp__(self, other):
-        """__cmp___"""
-        return cmp((self.CHROM, self.POS),
-                   (getattr(other, "CHROM", None),
-                    getattr(other, "GENE", None),
-                    getattr(other, "POS", None)))
-
     # For Python 3
     def __eq__(self, other):
         """ _Records are equal if they describe the same variant (same position, amino acids).
