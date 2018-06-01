@@ -55,7 +55,6 @@ FIELD_COUNTS = {
 _Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
                                         'version'])
 _Filter = collections.namedtuple('Filter', ['id', 'desc'])
-_Alt = collections.namedtuple('Alt', ['id', 'desc'])
 
 
 class _aavfMetadataParser(object):
