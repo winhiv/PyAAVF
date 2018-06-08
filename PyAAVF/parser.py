@@ -22,17 +22,14 @@ CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
 
-import codecs
 import collections
 try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
 import csv
-import gzip
 import itertools
 import re
-import sys
 
 from PyAAVF.model import _Record
 
@@ -130,17 +127,17 @@ class _aavfMetadataParser(object):
 class Reader(object):
     """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
 
-    def __init__(self, filename):
-        """ Create a new Reader for a AAVF file. You must specify filename.
+    def __init__(self, filehandle):
+        """ Create a new Reader for a AAVF file. You must specify file handle.
         """
         super(Reader, self).__init__()
 
-        if not filename:
-            raise Exception('You must provide a filename')
+        if not filehandle:
+            raise Exception('You must provide a file handle.')
 
-        if filename:
-            self._reader = open(filename, 'r')
-        self.filename = filename
+        if filehandle:
+            self._reader = filehandle
+            self.filename = self._reader.name
 
         self._separator = '\t| +'
 

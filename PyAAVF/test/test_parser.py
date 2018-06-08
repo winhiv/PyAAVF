@@ -28,9 +28,11 @@ import PyAAVF.parser as parser
 
 # pylint: disable=no-self-use,too-few-public-methods
 
-def fhandle(fname, mode='rt'):
+def fhandle(fname, mode='r'):
     """Return an open file handle."""
-    return open(os.path.join(os.path.dirname(__file__), fname), mode)
+    dirname = os.path.dirname(__file__)
+    file_d = open(os.path.join(dirname, fname), mode)
+    return file_d
 
 class TestAAVFSpecs(object):
     """Test whether the AAVF file can be walked through."""
