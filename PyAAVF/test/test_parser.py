@@ -68,7 +68,7 @@ class TestInfoOrder(object):
         """
         reader = parser.Reader(fhandle('sample.aavf', 'r'))
         out = StringIO()
-        writer = parser.Writer(out, reader, lineterminator='\n')
+        writer = parser.Writer(out, reader)
 
         for record in reader:
             writer.write_record(record)
@@ -112,3 +112,35 @@ class TestInfoTypeCharacter(object):
 
         for left, right in zip(records, reader2):
             assert left.INFO == right.INFO
+
+class TestWriter(object):
+    """Perfom tests to make sure that the Writer is performing as expected"""
+    def test_write_to_file(self):
+        """Test whether writes to file work as expected."""
+        reader = parser.Reader(fhandle('sample.aavf'))
+        out = fhandle('sampleoutput.aavf', "w+")
+        writer = parser.Writer(out, reader)
+
+        records = list(reader)
+
+        for record in records:
+            writer.write_record(record)
+
+        out.close()
+        reader1 = parser.Reader(fhandle('sample.aavf'))
+
+        reader2 = parser.Reader(fhandle('sampleoutput.aavf'))
+        assert len(list(reader1.reader)) == len(list(reader2.reader))
+        # all data lines should be read from the sample file
+
+        reader2 = parser.Reader(fhandle('sampleoutput.aavf'))
+        for left, right in zip(reader1, reader2):
+            assert left.INFO == right.INFO
+
+class TestReader(object):
+    """Perfom tests to make sure that the Reader is performing as expected"""
+    def test_read_from_file(self):
+        """Test whether reads from file work as expected."""
+        reader1 = parser.Reader(fhandle('sample.aavf'))
+        assert len([record for record in reader1.reader]) == 7
+        # all data lines should be read from the sample file

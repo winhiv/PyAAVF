@@ -27,7 +27,6 @@ try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
-import csv
 import itertools
 import re
 
@@ -302,17 +301,14 @@ class Reader(object):
 
 
 class Writer(object):
-    """Writer for AAVF file. You must supply an output string (e.g. StringIO),
+    """Writer for AAVF file. You must supply an output stream such as StringIO,
        and an Reader object to use as a template for the AAVF metadata and
        header. Optionally specify the line terminator."""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v, k) for k, v in FIELD_COUNTS.items())
 
-    def __init__(self, stream, template, lineterminator="\n"):
-        self.writer = csv.writer(stream, delimiter="\t",
-                                 lineterminator=lineterminator,
-                                 quotechar='', quoting=csv.QUOTE_NONE)
+    def __init__(self, stream, template):
         self.template = template
         self.stream = stream
 
@@ -349,12 +345,11 @@ class Writer(object):
     def write_record(self, record):
         """Write the record into the next line of the AAVF output
            write a record to the file """
-        ffs = self._map(str, [record.CHROM, record.GENE, record.POS, record.REF]) \
-            + [record.ALT, self._format_filter(record.FILTER),
-               record.ALT_FREQ, record.COVERAGE,
-               self._format_info(record.INFO)]
-
-        self.writer.writerow(ffs)
+        ffs = [record.CHROM, record.GENE, record.POS, record.REF]
+        ffs += [self._format_alt(record.ALT), self._format_filter(record.FILTER)]
+        ffs += [str(record.ALT_FREQ), str(record.COVERAGE), self._format_info(record.INFO)]
+        ffs = map(str, ffs)
+        self.stream.write('\t'.join(ffs))
 
     def flush(self):
         """Flush the writer"""
@@ -377,6 +372,10 @@ class Writer(object):
             return num_str
         else:
             return self.counts[num_str]
+
+    def _format_alt(self, alt):
+        """Format ALT data field"""
+        return ','.join(self._map(str, alt))
 
     def _format_filter(self, flt):
         """Get the correctly formatted FILTER data field"""
