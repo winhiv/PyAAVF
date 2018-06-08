@@ -185,8 +185,7 @@ class Reader(object):
         self.encoding = encoding
 
     def __iter__(self):
-        while True:
-            yield next()
+        yield self.__next__()
 
     def _parse_metainfo(self):
         '''Parse the information stored in the metainfo of the AAVF.
@@ -301,9 +300,13 @@ class Reader(object):
 
         return retdict
 
-    def next(self):
-        '''Return the next record in the file.'''
-        line = next(self.reader)
+    def __next__(self):
+        '''Parse the current record in the file.'''
+        try:
+            line = next(self.reader)
+        except StopIteration:
+            raise StopIteration
+
         row = self._row_pattern.split(line.rstrip())
         chrom = row[0]
         if self._prepend_chr:
@@ -347,12 +350,12 @@ class Writer(object):
         # get a maximum key).
         self.info_order = collections.defaultdict(
             lambda: len(template.infos),
-            dict(zip(template.infos.iterkeys(), itertools.count())))
+            dict(zip(template.infos.keys(), itertools.count())))
 
         two = '##{key}=<ID={0},Description="{1}">\n'
         four = '##{key}=<ID={0},Number={num},Type={2},Description="{3}">\n'
         _num = self._fix_field_count
-        for (key, vals) in template.metadata.iteritems():
+        for (key, vals) in template.metadata.items():
             if key in SINGULAR_METADATA:
                 vals = [vals]
             for val in vals:
@@ -362,9 +365,9 @@ class Writer(object):
                     stream.write('##{0}=<{1}>\n'.format(key, values))
                 else:
                     stream.write('##{0}={1}\n'.format(key, val))
-        for line in template.infos.itervalues():
+        for line in template.infos.values():
             stream.write(four.format(key="INFO", *line, num=_num(line.num)))
-        for line in template.filters.itervalues():
+        for line in template.filters.values():
             stream.write(two.format(key="FILTER", *line))
 
         self._write_header()
