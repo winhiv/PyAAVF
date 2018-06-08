@@ -137,7 +137,6 @@ class Reader(object):
 
         if filehandle:
             self._reader = filehandle
-            self.filename = self._reader.name
 
         self._separator = '\t| +'
 
@@ -303,7 +302,7 @@ class Reader(object):
 
 
 class Writer(object):
-    """AAVF Writer."""
+    """Writer for AAVF file."""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v, k) for k, v in FIELD_COUNTS.items())
