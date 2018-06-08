@@ -302,7 +302,9 @@ class Reader(object):
 
 
 class Writer(object):
-    """Writer for AAVF file."""
+    """Writer for AAVF file. You must supply an output string (e.g. StringIO),
+       and an Reader object to use as a template for the AAVF metadata and
+       header. Optionally specify the line terminator."""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v, k) for k, v in FIELD_COUNTS.items())
@@ -341,10 +343,12 @@ class Writer(object):
         self._write_header()
 
     def _write_header(self):
+        """Write the header line of the AAVF output"""
         self.stream.write('#' + '\t'.join(self.template.column_headers) + '\n')
 
     def write_record(self, record):
-        """ write a record to the file """
+        """Write the record into the next line of the AAVF output
+           write a record to the file """
         ffs = self._map(str, [record.CHROM, record.GENE, record.POS, record.REF]) \
             + [record.ALT, self._format_filter(record.FILTER),
                record.ALT_FREQ, record.COVERAGE,
@@ -374,15 +378,14 @@ class Writer(object):
         else:
             return self.counts[num_str]
 
-    def _format_alt(self, alt):
-        return ','.join(self._map(str, alt))
-
     def _format_filter(self, flt):
+        """Get the correctly formatted FILTER data field"""
         if flt == []:
             return 'PASS'
         return self._stringify(flt, none='.', delim=';')
 
     def _format_info(self, info):
+        """Get the correctly formatted INFO data field"""
         if not info:
             return MISSING_VALUE
         return ';'.join(self._stringify_pair(f, info[f]) for f in
@@ -393,11 +396,14 @@ class Writer(object):
         return self.info_order[field], field
 
     def _stringify(self, x_var, none='.', delim=','):
+        """Convert an object to a string, accounting for missing values"""
         if isinstance(x_var, list):
             return delim.join(self._map(str, x_var, none))
         return str(x_var) if x_var is not None else none
 
     def _stringify_pair(self, x_var, y_var, none='.', delim=','):
+        """Convert a pair of objects to a string (e.g. "X : Y"), accounting
+           for missing values."""
         if isinstance(y_var, bool):
             return str(x_var) if y_var else ""
         return "%s=%s" % (str(x_var),
