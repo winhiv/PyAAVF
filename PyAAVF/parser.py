@@ -37,6 +37,8 @@ import sys
 from PyAAVF.model import _Record
 
 
+MISSING_VALUE = '.'
+
 # Metadata parsers/constants
 RESERVED_INFO = {
     'RC': 'String', 'AC': 'String', 'ACC': 'Integer', 'ACF': 'Float',
@@ -48,7 +50,7 @@ SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference']
 
 # Conversion between value in file and Python value
 FIELD_COUNTS = {
-    '.': None,  # Unknown number of values
+    MISSING_VALUE: None,  # Unknown number of values
 }
 
 
@@ -227,7 +229,7 @@ class Reader(object):
             self.column_headers = fields[:9]
 
     # pylint: disable=dangerous-default-value,no-self-use
-    def _map(self, func, iterable, bad=['.', '']):
+    def _map(self, func, iterable, bad=[MISSING_VALUE, '']):
         '''``map``, but make bad values None.'''
         return [func(x) if x not in bad else None
                 for x in iterable]
@@ -236,7 +238,7 @@ class Reader(object):
     def _parse_filter(self, filt_str):
         '''Parse the FILTER field of a AAVF entry into a Python list
         '''
-        if filt_str == '.':  # if set to the missing value
+        if filt_str == MISSING_VALUE:  # if set to the missing value
             return None
         elif filt_str == 'PASS':
             return []
@@ -248,7 +250,7 @@ class Reader(object):
         '''Parse the INFO field of a AAVF entry into a dictionary of Python
         types.
         '''
-        if info_str == '.':  # if set to the missing value
+        if info_str == MISSING_VALUE:  # if set to the missing value
             return {}
 
         entries = info_str.split(';')
@@ -416,13 +418,13 @@ class Writer(object):
 
     def _format_info(self, info):
         if not info:
-            return '.'
-
-        def order_key(field):
-            '''Order by header definition first, alphabetically second.'''
-            return self.info_order[field], field
+            return MISSING_VALUE
         return ';'.join(self._stringify_pair(f, info[f]) for f in
-                        sorted(info, key=order_key))
+                        sorted(info, key=self.order_key))
+
+    def order_key(self, field):
+        '''Order by header definition first, alphabetically second.'''
+        return self.info_order[field], field
 
     def _stringify(self, x_var, none='.', delim=','):
         if isinstance(x_var, list):
@@ -436,7 +438,7 @@ class Writer(object):
                           self._stringify(y_var, none=none, delim=delim))
 
     # pylint: disable=no-self-use
-    def _map(self, func, iterable, none='.'):
+    def _map(self, func, iterable, none=MISSING_VALUE):
         '''``map``, but make None values none.'''
         return [func(x_var) if x_var is not None else none
                 for x_var in iterable]
