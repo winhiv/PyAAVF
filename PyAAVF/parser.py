@@ -336,7 +336,7 @@ class Reader(object):
 
 
 class Writer(object):
-    """AAVF Writer. On Windows Python 2, open stream with 'wb'."""
+    """AAVF Writer."""
 
     # Reverse keys and values in header field count dictionary
     counts = dict((v, k) for k, v in FIELD_COUNTS.items())
