@@ -130,43 +130,19 @@ class _aavfMetadataParser(object):
 class Reader(object):
     """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
 
-    def __init__(self, fsock=None, filename=None, compressed=None,
-                 prepend_chr=False, strict_whitespace=False, encoding='ascii'):
-        """ Create a new Reader for a AAVF file.
-            You must specify either fsock (stream) or filename.  Gzipped
-            streams or files are attempted to be recogized by the file
-            extension, or gzipped can be forced with ``compressed=True``
-            'prepend_chr=True' will put 'chr' before all the CHROM values,
-            useful for different sources.
-            'strict_whitespace=True' will split records on tabs only
-            which allows you to parse files with spaces in the
-            sample names.
+    def __init__(self, filename):
+        """ Create a new Reader for a AAVF file. You must specify filename.
         """
         super(Reader, self).__init__()
 
-        if not (fsock or filename):
-            raise Exception('You must provide at least fsock or filename')
+        if not filename:
+            raise Exception('You must provide a filename')
 
-        if fsock:
-            self._reader = fsock
-            if filename is None and hasattr(fsock, 'name'):
-                filename = fsock.name
-                if compressed is None:
-                    compressed = filename.endswith('.gz')
-        elif filename:
-            if compressed is None:
-                compressed = filename.endswith('.gz')
-            self._reader = open(filename, 'rb' if compressed else 'rt')
+        if filename:
+            self._reader = open(filename, 'r')
         self.filename = filename
-        if compressed:
-            self._reader = gzip.GzipFile(fileobj=self._reader)
-            if sys.version > '3':
-                self._reader = codecs.getreader(encoding)(self._reader)
 
-        if strict_whitespace:
-            self._separator = '\t'
-        else:
-            self._separator = '\t| +'
+        self._separator = '\t| +'
 
         self._row_pattern = re.compile(self._separator)
 
@@ -180,9 +156,7 @@ class Reader(object):
         self.filters = {}
         self._header_lines = []
         self.column_headers = []
-        self._prepend_chr = prepend_chr
         self._parse_metainfo()
-        self.encoding = encoding
 
     def __iter__(self):
         yield self.__next__()
@@ -309,8 +283,6 @@ class Reader(object):
 
         row = self._row_pattern.split(line.rstrip())
         chrom = row[0]
-        if self._prepend_chr:
-            chrom = 'chr' + chrom
 
         gene = str(row[1])
 
