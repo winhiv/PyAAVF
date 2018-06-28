@@ -23,14 +23,11 @@ specific language governing permissions and limitations under the License.
 """
 
 import collections
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
 import itertools
 import re
 
 from PyAAVF.model import _Record
+from PyAAVF.model import AAVF
 
 
 MISSING_VALUE = '.'
@@ -122,7 +119,7 @@ class _aavfMetadataParser(object):
         return (match.group('key'), match.group('val'))
 
 
-# pylint: disable=too-many-instance-attributes,too-many-arguments
+# pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 class Reader(object):
     """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
 
@@ -144,47 +141,50 @@ class Reader(object):
         self.reader = (line.strip() for line in self._reader if line.strip())
 
         #: metadata fields from header (string or hash, depending)
-        self.metadata = {}
+        # self.metadata = {}
         #: INFO fields from header
         self.infos = {}
         #: FILTER fields from header
         self.filters = {}
         self._header_lines = []
         self.column_headers = []
-        self._parse_metainfo()
 
-    def __iter__(self):
-        yield self.__next__()
+    # pylint: disable=too-many-locals
+    def parse_records(self):
+        '''Parse the information stored in the metainfo of the AAVF and return
+           a new iterable AAVF object with the metadata stored in that object.
+           Throws an exception if unable to parse header lines of the file.'''
 
-    def _parse_metainfo(self):
-        '''Parse the information stored in the metainfo of the AAVF.
-        The end user shouldn't have to use this.  She can access the metainfo
-        directly with ``self.metadata``.'''
-        for attr in ('metadata', 'infos', 'filters'):
-            setattr(self, attr, OrderedDict())
+        #: metadata fields from header (string or hash, depending)
+        metadata = {}
+        #: INFO fields from header
+        infos = {}
+        #: FILTER fields from header
+        filters = {}
+        header_lines = []
 
         parser = _aavfMetadataParser()
-
         line = next(self.reader)
+
         while line.startswith('##'):
-            self._header_lines.append(line)
+            header_lines.append(line)
 
             if line.startswith('##INFO'):
                 key, val = parser.read_info(line)
-                self.infos[key] = val
+                infos[key] = val
 
             elif line.startswith('##FILTER'):
                 key, val = parser.read_filter(line)
-                self.filters[key] = val
+                filters[key] = val
 
             else:
                 key, val = parser.read_meta(line)
                 if key in SINGULAR_METADATA:
-                    self.metadata[key] = val
+                    metadata[key] = val
                 else:
-                    if key not in self.metadata:
-                        self.metadata[key] = []
-                    self.metadata[key].append(val)
+                    if key not in metadata:
+                        metadata[key] = []
+                    metadata[key].append(val)
 
             line = next(self.reader)
 
@@ -193,7 +193,43 @@ class Reader(object):
         else:
             # pylint: disable=dangerous-default-value
             fields = self._row_pattern.split(line[1:])
-            self.column_headers = fields[:9]
+            column_headers = fields[:9]
+
+        record_list = []
+
+        line = next(self.reader)
+
+        # add records to the AAVF object until we have reached StopIteration
+        while line:
+            row = self._row_pattern.split(line.rstrip())
+            chrom = row[0]
+
+            gene = str(row[1])
+
+            pos = int(row[2])
+
+            ref = row[3]
+            alt = row[4].split(',')
+
+            filt = self._parse_filter(row[5])
+
+            alt_freq = float(row[6])
+
+            coverage = int(row[7])
+
+            info = self._parse_info(row[8])
+
+            record = _Record(chrom, gene, pos, ref, alt, filt, alt_freq, coverage,
+                             info)
+            record_list.append(record)
+            try:
+                line = next(self.reader)
+            except StopIteration:
+                line = None
+
+        aavf = AAVF(metadata, infos, filters, column_headers, record_list)
+
+        return aavf
 
     # pylint: disable=dangerous-default-value,no-self-use
     def _map(self, func, iterable, bad=[MISSING_VALUE, '']):
@@ -269,36 +305,6 @@ class Reader(object):
 
         return retdict
 
-    def __next__(self):
-        '''Parse the current record in the file.'''
-        try:
-            line = next(self.reader)
-        except StopIteration:
-            raise StopIteration
-
-        row = self._row_pattern.split(line.rstrip())
-        chrom = row[0]
-
-        gene = str(row[1])
-
-        pos = int(row[2])
-
-        ref = row[3]
-        alt = row[4].split(',')
-
-        filt = self._parse_filter(row[5])
-
-        alt_freq = float(row[6])
-
-        coverage = int(row[7])
-
-        info = self._parse_info(row[8])
-
-        record = _Record(chrom, gene, pos, ref, alt, filt, alt_freq, coverage,
-                         info)
-
-        return record
-
 
 class Writer(object):
     """Writer for AAVF file. You must supply an output stream such as StringIO,
@@ -345,11 +351,11 @@ class Writer(object):
     def write_record(self, record):
         """Write the record into the next line of the AAVF output
            write a record to the file """
-        ffs = [record.CHROM, record.GENE, record.POS, record.REF]
+        ffs = [record.CHROM, record.GENE, str(record.POS), record.REF]
         ffs += [self._format_alt(record.ALT), self._format_filter(record.FILTER)]
         ffs += [str(record.ALT_FREQ), str(record.COVERAGE), self._format_info(record.INFO)]
-        ffs = map(str, ffs)
-        self.stream.write('\t'.join(ffs))
+        # ffs = map(str, ffs)
+        self.stream.write('\t'.join(ffs)+'\n')
 
     def flush(self):
         """Flush the writer"""

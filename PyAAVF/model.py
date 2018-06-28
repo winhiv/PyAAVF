@@ -23,6 +23,40 @@ specific language governing permissions and limitations under the License.
 """
 
 
+class AAVF(object):
+    '''An iterable AAVF object that contains the metadata from an AAVF file
+       and an list of AAVF records.'''
+
+    # pylint: disable=too-many-arguments,too-few-public-methods
+    def __init__(self, metadata, infos, filters, column_headers, records):
+        """ Create a new AAVF objeect, an iterator of _Record objects.
+        """
+        #: METADATA fields from header
+        self.metadata = metadata
+        #: INFO fields from header
+        self.infos = infos
+        #: FILTER fields from header
+        self.filters = filters
+
+        self.column_headers = column_headers
+
+        # a list of _Record objects
+        self.records = records
+
+        self.record_len = len(self.records)
+
+        self.index = -1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index == (self.record_len - 1):
+            raise StopIteration
+        self.index = self.index + 1
+        return self.records[self.index]
+
+
 class _Record(object):
     """ Equivalent to a row in an AAVF file.
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,

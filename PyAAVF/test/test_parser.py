@@ -39,10 +39,15 @@ class TestAAVFSpecs(object):
     def test_aavf_1_0(self):
         """Test with AAVF Version 1.0"""
         reader = parser.Reader(fhandle('sample.aavf'))
-        assert reader.metadata['fileformat'] == 'AAVFv1.0'
+        aavf_obj = reader.parse_records()
+
+        assert 'fileformat' in aavf_obj.metadata.keys(), "Metadata should contain fileformat," + \
+               "metadata dict is %s" % aavf_obj.metadata.items()
+
+        assert aavf_obj.metadata['fileformat'] == 'AAVFv1.0'
 
         # test we can walk the file at least
-        for line in reader:
+        for line in aavf_obj:
 
             if line.POS == 103:
                 assert not line.is_filtered
@@ -67,10 +72,11 @@ class TestInfoOrder(object):
         alphabetical order.
         """
         reader = parser.Reader(fhandle('sample.aavf', 'r'))
+        aavf_obj = reader.parse_records()
         out = StringIO()
-        writer = parser.Writer(out, reader)
+        writer = parser.Writer(out, aavf_obj)
 
-        for record in reader:
+        for record in aavf_obj:
             writer.write_record(record)
         out.seek(0)
         out_str = out.getvalue()
@@ -89,7 +95,8 @@ class TestInfoTypeCharacter(object):
     def test_parse(self):
         """Test whether the INFO section can be parsed correctly."""
         reader = parser.Reader(fhandle('sample.aavf'))
-        record = next(reader)
+        aavf_obj = reader.parse_records()
+        record = next(aavf_obj)
         assert record.INFO['RC'] == 'tca'
         # the below two RESERVED_INFO constants in the INFO fields have a
         # number of possible values that varies ior is unbounded. Thus, a list
@@ -100,17 +107,19 @@ class TestInfoTypeCharacter(object):
     def test_write(self):
         """Test whether the INFO section can be written correctly."""
         reader = parser.Reader(fhandle('sample.aavf'))
+        aavf_obj = reader.parse_records()
         out = StringIO()
-        writer = parser.Writer(out, reader)
+        writer = parser.Writer(out, aavf_obj)
 
-        records = list(reader)
+        records = list(aavf_obj)
 
         for record in records:
             writer.write_record(record)
         out.seek(0)
         reader2 = parser.Reader(out)
+        aavf_obj2 = reader2.parse_records()
 
-        for left, right in zip(records, reader2):
+        for left, right in zip(records, aavf_obj2):
             assert left.INFO == right.INFO
 
 class TestWriter(object):
@@ -118,22 +127,23 @@ class TestWriter(object):
     def test_write_to_file(self):
         """Test whether writes to file work as expected."""
         reader = parser.Reader(fhandle('sample.aavf'))
+        aavf_obj = reader.parse_records()
         out = fhandle('sampleoutput.aavf', "w+")
-        writer = parser.Writer(out, reader)
+        writer = parser.Writer(out, aavf_obj)
 
-        records = list(reader)
+        records = list(aavf_obj)
 
         for record in records:
             writer.write_record(record)
 
         out.close()
-        reader1 = parser.Reader(fhandle('sample.aavf'))
+        reader1 = parser.Reader(fhandle('sample.aavf')).parse_records()
 
-        reader2 = parser.Reader(fhandle('sampleoutput.aavf'))
-        assert len(list(reader1.reader)) == len(list(reader2.reader))
+        reader2 = parser.Reader(fhandle('sampleoutput.aavf')).parse_records()
+        assert len(list(reader1)) == len(list(reader2))
         # all data lines should be read from the sample file
 
-        reader2 = parser.Reader(fhandle('sampleoutput.aavf'))
+        reader2 = parser.Reader(fhandle('sampleoutput.aavf')).parse_records()
         for left, right in zip(reader1, reader2):
             assert left.INFO == right.INFO
 
@@ -141,6 +151,6 @@ class TestReader(object):
     """Perfom tests to make sure that the Reader is performing as expected"""
     def test_read_from_file(self):
         """Test whether reads from file work as expected."""
-        reader1 = parser.Reader(fhandle('sample.aavf'))
-        assert len([record for record in reader1.reader]) == 7
+        reader1 = parser.Reader(fhandle('sample.aavf')).parse_records()
+        assert len([record for record in reader1]) == 7
         # all data lines should be read from the sample file
