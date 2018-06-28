@@ -97,7 +97,8 @@ class TestInfoTypeCharacter(object):
         reader = parser.Reader(fhandle('sample.aavf'))
         aavf_obj = reader.parse_records()
         record = next(aavf_obj)
-        assert record.INFO['RC'] == 'tca'
+        assert record.INFO['RC'] == 'tca', "record.INFO['RC'] should be 'tca'" + \
+               ", record.INFO is %s" %  record.INFO
         # the below two RESERVED_INFO constants in the INFO fields have a
         # number of possible values that varies ior is unbounded. Thus, a list
         # is returned.
@@ -120,7 +121,8 @@ class TestInfoTypeCharacter(object):
         aavf_obj2 = reader2.parse_records()
 
         for left, right in zip(records, aavf_obj2):
-            assert left.INFO == right.INFO
+            assert left.INFO == right.INFO, "left.INFO is %s and right.INFO is %s" \
+                   % (left.INFO, right.INFO)
 
 class TestWriter(object):
     """Perfom tests to make sure that the Writer is performing as expected"""

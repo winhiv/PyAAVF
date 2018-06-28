@@ -141,13 +141,14 @@ class Reader(object):
         self.reader = (line.strip() for line in self._reader if line.strip())
 
         #: metadata fields from header (string or hash, depending)
-        # self.metadata = {}
+        self.metadata = {}
         #: INFO fields from header
         self.infos = {}
         #: FILTER fields from header
         self.filters = {}
         self._header_lines = []
         self.column_headers = []
+        self.header_lines = []
 
     # pylint: disable=too-many-locals
     def parse_records(self):
@@ -155,36 +156,33 @@ class Reader(object):
            a new iterable AAVF object with the metadata stored in that object.
            Throws an exception if unable to parse header lines of the file.'''
 
-        #: metadata fields from header (string or hash, depending)
-        metadata = {}
-        #: INFO fields from header
-        infos = {}
-        #: FILTER fields from header
-        filters = {}
-        header_lines = []
+        self.metadata = {}
+        self.infos = {}
+        self.filters = {}
+        self.header_lines = []
 
         parser = _aavfMetadataParser()
         line = next(self.reader)
 
         while line.startswith('##'):
-            header_lines.append(line)
+            self.header_lines.append(line)
 
             if line.startswith('##INFO'):
                 key, val = parser.read_info(line)
-                infos[key] = val
+                self.infos[key] = val
 
             elif line.startswith('##FILTER'):
                 key, val = parser.read_filter(line)
-                filters[key] = val
+                self.filters[key] = val
 
             else:
                 key, val = parser.read_meta(line)
                 if key in SINGULAR_METADATA:
-                    metadata[key] = val
+                    self.metadata[key] = val
                 else:
-                    if key not in metadata:
-                        metadata[key] = []
-                    metadata[key].append(val)
+                    if key not in self.metadata:
+                        self.metadata[key] = []
+                    self.metadata[key].append(val)
 
             line = next(self.reader)
 
@@ -227,7 +225,7 @@ class Reader(object):
             except StopIteration:
                 line = None
 
-        aavf = AAVF(metadata, infos, filters, column_headers, record_list)
+        aavf = AAVF(self.metadata, self.infos, self.filters, column_headers, record_list)
 
         return aavf
 
@@ -354,7 +352,7 @@ class Writer(object):
         ffs = [record.CHROM, record.GENE, str(record.POS), record.REF]
         ffs += [self._format_alt(record.ALT), self._format_filter(record.FILTER)]
         ffs += [str(record.ALT_FREQ), str(record.COVERAGE), self._format_info(record.INFO)]
-        # ffs = map(str, ffs)
+        ffs = map(str, ffs)
         self.stream.write('\t'.join(ffs)+'\n')
 
     def flush(self):
