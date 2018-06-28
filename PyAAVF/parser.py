@@ -121,10 +121,10 @@ class _aavfMetadataParser(object):
 
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 class Reader(object):
-    """ Reader for a AAVF file."""
+    """ Reader that can be used for parsing records from AAVF files."""
 
     def __init__(self):
-        """ Create a new Reader for a AAVF file. You must specify file handle.
+        """ Create a new Reader for a AAVF file.
         """
         super(Reader, self).__init__()
 
@@ -149,7 +149,8 @@ class Reader(object):
     def parse_records(self, filehandle):
         """ Parse records from a AAVF file, returns an iterable AAVF object which can
             be used to iterate over AAVF records read from a file. The AAVF object
-            returned also contains the metadata parsed from the file"""
+            returned also contains the metadata parsed from the file.
+            You must specify file handle."""
 
         if not filehandle:
             raise Exception('You must provide a file handle.')
