@@ -123,22 +123,17 @@ class _aavfMetadataParser(object):
 class Reader(object):
     """ Reader for a AAVF file."""
 
-    def __init__(self, filehandle):
+    def __init__(self):
         """ Create a new Reader for a AAVF file. You must specify file handle.
         """
         super(Reader, self).__init__()
 
-        if not filehandle:
-            raise Exception('You must provide a file handle.')
-
-        if filehandle:
-            self._reader = filehandle
+        self._reader = None  # to be initialized by parse_records function
+        self.reader = None  # to be initialized by parse_records function
 
         self._separator = '\t| +'
 
         self._row_pattern = re.compile(self._separator)
-
-        self.reader = (line.strip() for line in self._reader if line.strip())
 
         #: metadata fields from header (string or hash, depending)
         self.metadata = {}
@@ -151,10 +146,16 @@ class Reader(object):
         self.header_lines = []
 
     # pylint: disable=too-many-locals
-    def parse_records(self):
+    def parse_records(self, filehandle):
         """ Parse records from a AAVF file, returns an iterable AAVF object which can
             be used to iterate over AAVF records read from a file. The AAVF object
             returned also contains the metadata parsed from the file"""
+
+        if not filehandle:
+            raise Exception('You must provide a file handle.')
+        elif filehandle:
+            self._reader = filehandle
+        self.reader = (line.strip() for line in self._reader if line.strip())
 
         self._parse_metadata()
         record_list = []
