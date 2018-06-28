@@ -121,7 +121,7 @@ class _aavfMetadataParser(object):
 
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 class Reader(object):
-    """ Reader for a AAVF file, an iterator returning ``_Record objects`` """
+    """ Reader for a AAVF file."""
 
     def __init__(self, filehandle):
         """ Create a new Reader for a AAVF file. You must specify file handle.
@@ -152,49 +152,12 @@ class Reader(object):
 
     # pylint: disable=too-many-locals
     def parse_records(self):
-        '''Parse the information stored in the metainfo of the AAVF and return
-           a new iterable AAVF object with the metadata stored in that object.
-           Throws an exception if unable to parse header lines of the file.'''
+        """ Parse records from a AAVF file, returns an iterable AAVF object which can
+            be used to iterate over AAVF records read from a file. The AAVF object
+            returned also contains the metadata parsed from the file"""
 
-        self.metadata = {}
-        self.infos = {}
-        self.filters = {}
-        self.header_lines = []
-
-        parser = _aavfMetadataParser()
-        line = next(self.reader)
-
-        while line.startswith('##'):
-            self.header_lines.append(line)
-
-            if line.startswith('##INFO'):
-                key, val = parser.read_info(line)
-                self.infos[key] = val
-
-            elif line.startswith('##FILTER'):
-                key, val = parser.read_filter(line)
-                self.filters[key] = val
-
-            else:
-                key, val = parser.read_meta(line)
-                if key in SINGULAR_METADATA:
-                    self.metadata[key] = val
-                else:
-                    if key not in self.metadata:
-                        self.metadata[key] = []
-                    self.metadata[key].append(val)
-
-            line = next(self.reader)
-
-        if not line:
-            raise Exception("Unable to parse header line in AAVF file.")
-        else:
-            # pylint: disable=dangerous-default-value
-            fields = self._row_pattern.split(line[1:])
-            column_headers = fields[:9]
-
+        self._parse_metadata()
         record_list = []
-
         line = next(self.reader)
 
         # add records to the AAVF object until we have reached StopIteration
@@ -225,7 +188,7 @@ class Reader(object):
             except StopIteration:
                 line = None
 
-        aavf = AAVF(self.metadata, self.infos, self.filters, column_headers, record_list)
+        aavf = AAVF(self.metadata, self.infos, self.filters, self.column_headers, record_list)
 
         return aavf
 
@@ -302,6 +265,48 @@ class Reader(object):
             retdict[info_id] = val
 
         return retdict
+
+    def _parse_metadata(self):
+        '''Parse the information stored in the metainfo of the AAVF and return
+           a new iterable AAVF object with the metadata stored in that object.
+           Throws an exception if unable to parse header lines of the file.'''
+
+        self.metadata = {}
+        self.infos = {}
+        self.filters = {}
+        self.header_lines = []
+
+        parser = _aavfMetadataParser()
+        line = next(self.reader)
+
+        while line.startswith('##'):
+            self.header_lines.append(line)
+
+            if line.startswith('##INFO'):
+                key, val = parser.read_info(line)
+                self.infos[key] = val
+
+            elif line.startswith('##FILTER'):
+                key, val = parser.read_filter(line)
+                self.filters[key] = val
+
+            else:
+                key, val = parser.read_meta(line)
+                if key in SINGULAR_METADATA:
+                    self.metadata[key] = val
+                else:
+                    if key not in self.metadata:
+                        self.metadata[key] = []
+                    self.metadata[key].append(val)
+
+            line = next(self.reader)
+
+        if not line:
+            raise Exception("Unable to parse header line in AAVF file.")
+        else:
+            # pylint: disable=dangerous-default-value
+            fields = self._row_pattern.split(line[1:])
+            self.column_headers = fields[:9]
 
 
 class Writer(object):
