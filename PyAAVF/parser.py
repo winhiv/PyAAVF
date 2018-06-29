@@ -200,12 +200,6 @@ class Reader(object):
 
         return aavf
 
-    # pylint: disable=dangerous-default-value,no-self-use
-    def _map(self, func, iterable, bad=[MISSING_VALUE, '']):
-        '''``map``, but make bad values None.'''
-        return [func(x) if x not in bad else None
-                for x in iterable]
-
     # pylint: disable=no-self-use,no-else-return
     def _parse_filter(self, filt_str):
         '''Parse the FILTER field of a AAVF entry into a Python list
@@ -245,21 +239,21 @@ class Reader(object):
             if entry_type == 'Integer':
                 vals = entry[1].split(',')
                 try:
-                    val = self._map(int, vals)
+                    val = _map(int, vals)
                 # Allow specified integers to be flexibly parsed as floats.
                 # Handles cases with incorrectly specified header types.
                 except ValueError:
-                    val = self._map(float, vals)
+                    val = _map(float, vals)
             elif entry_type == 'Float':
                 vals = entry[1].split(',')
-                val = self._map(float, vals)
+                val = _map(float, vals)
             elif entry_type == 'Flag':
                 val = True
             elif entry_type in ('String', 'Character'):
                 try:
                     vals = entry[1].split(',')  # commas are reserved
                     # characters indicating multiple values
-                    val = self._map(str, vals)
+                    val = _map(str, vals)
                 except IndexError:
                     entry_type = 'Flag'
                     val = True
@@ -367,7 +361,7 @@ class Writer(object):
         ffs = [record.CHROM, record.GENE, str(record.POS), record.REF]
         ffs += [self._format_alt(record.ALT), self._format_filter(record.FILTER)]
         ffs += [str(record.ALT_FREQ), str(record.COVERAGE), self._format_info(record.INFO)]
-        ffs = map(str, ffs)
+        ffs = _map(str, ffs)
         self.stream.write('\t'.join(ffs)+'\n')
 
     def flush(self):
@@ -384,17 +378,20 @@ class Writer(object):
         except AttributeError:
             pass
 
-    # pylint: disable=no-else-return
     def _fix_field_count(self, num_str):
         """Restore header number to original state"""
+        ret_val = None
         if num_str not in self.counts:
-            return num_str
+            ret_val = num_str
         else:
-            return self.counts[num_str]
+            ret_val = self.counts[num_str]
+        return ret_val
 
+    # pylint: disable=no-self-use
     def _format_alt(self, alt):
         """Format ALT data field"""
-        return ','.join(self._map(str, alt))
+        alt_str = _map(str, alt)
+        return ','.join(alt_str)
 
     def _format_filter(self, flt):
         """Get the correctly formatted FILTER data field"""
@@ -413,10 +410,11 @@ class Writer(object):
         '''Order by header definition first, alphabetically second.'''
         return self.info_order[field], field
 
+    # pylint: disable=no-self-use
     def _stringify(self, x_var, none='.', delim=','):
         """Convert an object to a string, accounting for missing values"""
         if isinstance(x_var, list):
-            return delim.join(self._map(str, x_var, none))
+            return delim.join(_map(str, x_var, none))
         return str(x_var) if x_var is not None else none
 
     def _stringify_pair(self, x_var, y_var, none='.', delim=','):
@@ -427,11 +425,11 @@ class Writer(object):
         return "%s=%s" % (str(x_var),
                           self._stringify(y_var, none=none, delim=delim))
 
-    # pylint: disable=no-self-use
-    def _map(self, func, iterable, none=MISSING_VALUE):
-        '''``map``, but make None values none.'''
-        return [func(x_var) if x_var is not None else none
-                for x_var in iterable]
+
+def _map(func, iterable, none=MISSING_VALUE):
+    '''``map``, but make None values none.'''
+    return [func(x_var) if x_var is not None else none
+            for x_var in iterable]
 
 
 def __update_readme():
