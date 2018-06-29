@@ -25,6 +25,7 @@ specific language governing permissions and limitations under the License.
 import collections
 import itertools
 import re
+import os
 
 from PyAAVF.model import _Record
 from PyAAVF.model import AAVF
@@ -121,18 +122,25 @@ class _aavfMetadataParser(object):
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 class Reader(object):
     """ Reader that can be used for parsing records from AAVF files.
-        You must specify file handle."""
+        You must specify file name."""
 
-    def __init__(self, filehandle):
+    def __init__(self, filename):
         """ Create a new Reader for a AAVF file. You must specify file handle.
         """
         super(Reader, self).__init__()
 
-        if not filehandle:
-            raise Exception('You must provide a file handle.')
+        if not filename:
+            raise Exception('You must provide a file name.')
 
-        if filehandle:
-            self._reader = filehandle
+        if filename:
+            dirname = os.path.dirname(__file__)
+            the_path = os.path.join(dirname, filename)
+            if os.path.isfile(the_path):
+                self._reader = open(the_path, "r")
+            elif os.path.isdir(the_path):
+                raise Exception('File path provided is a directory')
+            else:
+                raise Exception('File path provided does not exist.')
 
         self._separator = '\t| +'
 

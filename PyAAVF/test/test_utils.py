@@ -26,6 +26,9 @@ import os
 import PyAAVF.parser as parser
 import PyAAVF.utils as utils
 
+TEST_PATH = os.path.dirname(os.path.abspath(__file__))
+SAMPLE_FILE = TEST_PATH + '/sample.aavf'
+
 # pylint: disable=no-self-use
 class TestUtils(object):
     """
@@ -42,9 +45,9 @@ class TestUtils(object):
         output is identical.
         """
         # easy case: all same sites
-        aavf1 = parser.Reader(self.fhandle('sample.aavf')).read_records()
-        aavf2 = parser.Reader(self.fhandle('sample.aavf')).read_records()
-        aavf3 = parser.Reader(self.fhandle('sample.aavf')).read_records()
+        aavf1 = parser.Reader(SAMPLE_FILE).read_records()
+        aavf2 = parser.Reader(SAMPLE_FILE).read_records()
+        aavf3 = parser.Reader(SAMPLE_FILE).read_records()
 
         number = 0
         for trio in utils.walk_together(aavf1, aavf2, aavf3):
