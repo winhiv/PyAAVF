@@ -308,7 +308,9 @@ class Reader(object):
         else:
             # pylint: disable=dangerous-default-value
             fields = self._row_pattern.split(line[1:])
-            self.column_headers = fields[:9]
+            self.column_headers = []
+            for field in fields[:9]:
+                self.column_headers += field.strip()
 
 
 class Writer(object):
