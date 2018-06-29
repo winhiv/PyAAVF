@@ -320,7 +320,7 @@ class Reader(object):
 
 
 class Writer(object):
-    """Writer for AAVF file. You must supply an output stream such as StringIO,
+    """Writer for AAVF file. You must supply an output stream,
        and an Reader object to use as a template for the AAVF metadata and
        header. Optionally specify the line terminator."""
 
