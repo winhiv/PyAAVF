@@ -37,9 +37,8 @@ RESERVED_INFO = {
     'RC': 'String', 'AC': 'String', 'ACC': 'Integer', 'ACF': 'Float',
 }
 
-# Spec is a bit weak on which metadata lines are singular, like fileformat
-# and which can have repeats, like contig
-SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference']
+# Metadata lines which are singular
+SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference', 'source']
 
 # Conversion between value in file and Python value
 FIELD_COUNTS = {
@@ -128,8 +127,8 @@ class Reader(object):
         """
         super(Reader, self).__init__()
 
-        self._reader = None  # to be initialized by parse_records function
-        self.reader = None  # to be initialized by parse_records function
+        self._reader = None  # to be initialized by read_records function
+        self.reader = None  # to be initialized by read_records function
 
         self._separator = '\t| +'
 
@@ -146,7 +145,7 @@ class Reader(object):
         self.header_lines = []
 
     # pylint: disable=too-many-locals
-    def parse_records(self, filehandle):
+    def read_records(self, filehandle):
         """ Parse records from a AAVF file, returns an iterable AAVF object which can
             be used to iterate over AAVF records read from a file. The AAVF object
             returned also contains the metadata parsed from the file.
@@ -310,7 +309,7 @@ class Reader(object):
             fields = self._row_pattern.split(line[1:])
             self.column_headers = []
             for field in fields[:9]:
-                self.column_headers += field.strip()
+                self.column_headers.append(field.strip())
 
 
 class Writer(object):

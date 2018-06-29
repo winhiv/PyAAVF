@@ -42,9 +42,9 @@ class TestUtils(object):
         output is identical.
         """
         # easy case: all same sites
-        aavf1 = parser.Reader().parse_records(self.fhandle('sample.aavf'))
-        aavf2 = parser.Reader().parse_records(self.fhandle('sample.aavf'))
-        aavf3 = parser.Reader().parse_records(self.fhandle('sample.aavf'))
+        aavf1 = parser.Reader().read_records(self.fhandle('sample.aavf'))
+        aavf2 = parser.Reader().read_records(self.fhandle('sample.aavf'))
+        aavf3 = parser.Reader().read_records(self.fhandle('sample.aavf'))
 
         number = 0
         for trio in utils.walk_together(aavf1, aavf2, aavf3):
