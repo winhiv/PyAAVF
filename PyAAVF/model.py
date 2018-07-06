@@ -56,6 +56,10 @@ class AAVF(object):
         self.index = self.index + 1
         return self.records[self.index]
 
+    def next(self):
+        """Get next item in iterable."""
+        return self.__next__()
+
 
 class _Record(object):
     """ Equivalent to a row in an AAVF file.

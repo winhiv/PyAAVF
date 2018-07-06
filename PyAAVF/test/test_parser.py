@@ -22,11 +22,15 @@ CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
 
-from io import StringIO
 import os
 import PyAAVF.parser as parser
 from PyAAVF.model import AAVF
 from PyAAVF.model import _Record
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_FILE = TEST_PATH + '/sample.aavf'
