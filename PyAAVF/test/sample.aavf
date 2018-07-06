@@ -1,0 +1,16 @@
+##fileformat=AAVFv1.0
+##fileDate=20180501
+##source=myProgramV1.0
+##reference=hxb2.fas
+##INFO=<ID=RC,Number=1,Type=String,Description="Reference Codon">
+##INFO=<ID=AC,Number=.,Type=String,Description="Alternate Codon">
+##INFO=<ID=ACF,Number=.,Type=Float,Description="Alternate Codon Frequency, for each Alternate Codon, in the same order as listed.">
+##FILTER=<ID=af0.01,Description="Set if True; alt_freq<0.01">
+#CHROM  GENE    POS     REF    ALT     FILTER  ALT_FREQ  COVERAGE INFO
+hxb2    RT      48      S      *       af0.01  0.0031    324      RC=tca;AC=tAa;ACF=0.0031
+hxb2    RT      103     K      N       PASS    0.0779    154      RC=aaa;AC=aaC;ACF=0.0779
+hxb2    RT      117     S      Q       af0.01  0.0033    299      RC=tca;AC=CAa;ACF=0.0033
+hxb2    RT      118     V      F       af0.01  0.0065    306      RC=gtt;AC=Ttt;ACF=0.0065
+hxb2    RT      174     Q      K       af0.01  0.0091    659      RC=caa;AC=Aaa;ACF=0.0091
+hxb2    RT      212     W      G       af0.01  0.0044    1133     RC=tgg;AC=Ggg;ACF=0.0044
+hxb2    RT      248     E      K       af0.01  0.0022    1394     RC=gaa;AC=Aaa;ACF=0.0022

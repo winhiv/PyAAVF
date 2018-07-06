@@ -20,7 +20,6 @@ def main(args):
         print(str(e))
         sys.exit(e.status)
 
-
 def run_static_analysis():
     analyze_rst_files()
     analyze_setup_py()
@@ -108,7 +107,6 @@ def run(args, display_stdout=True):
 # textwrap.indent() doesn't exist in Python 2
 def indent(text, prefix='    '):
     return prefix + prefix.join(text.splitlines(True))
-
 
 if __name__ == '__main__':
     main(args=sys.argv[1:])

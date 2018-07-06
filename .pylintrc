@@ -109,7 +109,7 @@ spelling-store-unknown-words=no
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=79
+max-line-length=99
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$
@@ -186,10 +186,10 @@ name-group=
 include-naming-hint=no
 
 # Regular expression matching correct method names
-method-rgx=[a-z_][a-z0-9_]{2,30}$
+method-rgx=[a-z_][a-z0-9_]{2,40}$
 
 # Naming hint for method names
-method-name-hint=[a-z_][a-z0-9_]{2,30}$
+method-name-hint=[a-z_][a-z0-9_]{2,40}$
 
 # Regular expression matching correct constant names
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
