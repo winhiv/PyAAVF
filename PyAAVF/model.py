@@ -30,6 +30,7 @@ FIELD_COUNTS = {
 }
 
 
+# pylint: disable=useless-object-inheritance
 class Info(object):
     '''An object that defines the metadata INFO field attributes'''
 
@@ -61,6 +62,7 @@ class Info(object):
         return ret_val
 
 
+# pylint: disable=useless-object-inheritance
 class Filter(object):
     '''An object that defines the metadata FILTER field attributes'''
 
@@ -114,7 +116,7 @@ class AAVF(object):
 
 
 # pylint: disable=useless-object-inheritance
-class _Record(object):
+class Record(object):
     """ Equivalent to a row in an AAVF file.
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,
         COVERAGE and INFO are available as properties.
