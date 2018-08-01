@@ -182,8 +182,8 @@ class TestReader(object):
                "filedate should be 20180501, metadata is %s" % aavf.metadata
         assert aavf.metadata.get("source") == "myProgramV1.0", \
                "source should be myProgramV1.0, metadata is %s" % aavf.metadata
-        assert aavf.metadata.get("reference") == "hxb2.fas", \
-               "reference should be hxb2.fas, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("reference") == ["hxb2.fas"], \
+               "reference list should be [hxb2.fas], metadata is %s" % aavf.metadata
         assert aavf.infos
         assert aavf.filters
 

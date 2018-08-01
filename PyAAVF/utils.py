@@ -62,6 +62,7 @@ def walk_together(*readers):
         else:
             min_k = min(next_index_to_key.values())   # move on to next contig
 
+        # pylint: disable=consider-using-set-comprehension
         min_k_idxs = set([i for i, k in next_index_to_key.items() if k == min_k])
         yield [nexts[i] if i in min_k_idxs else None for i in range(len(nexts))]
 

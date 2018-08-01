@@ -74,6 +74,7 @@ class Filter(object):
         return filter_line % (self.filter_id, self.filter_desc)
 
 
+# pylint: disable=useless-object-inheritance
 class AAVF(object):
     '''An iterable AAVF object that contains the metadata from an AAVF file
        and an list of AAVF records.'''
@@ -112,7 +113,8 @@ class AAVF(object):
         return self.__next__()
 
 
-class Record(object):
+# pylint: disable=useless-object-inheritance
+class _Record(object):
     """ Equivalent to a row in an AAVF file.
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,
         COVERAGE and INFO are available as properties.
