@@ -52,6 +52,7 @@ _Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
 _Filter = collections.namedtuple('Filter', ['id', 'desc'])
 
 
+# pylint: disable=useless-object-inheritance
 class _aavfMetadataParser(object):
     '''Parse the metadata in the header of a AAVF file.'''
     def __init__(self):
@@ -119,7 +120,7 @@ class _aavfMetadataParser(object):
         return (match.group('key'), match.group('val'))
 
 
-# pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
+# pylint: disable=too-many-instance-attributes,too-few-public-methods,useless-object-inheritance
 class Reader(object):
     """ Reader that can be used for parsing records from AAVF files.
         You must specify file name."""
@@ -311,6 +312,7 @@ class Reader(object):
                 self.column_headers.append(field.strip())
 
 
+# pylint: disable=useless-object-inheritance
 class Writer(object):
     """Writer for AAVF file. You must supply an output stream,
        and an Reader object to use as a template for the AAVF metadata and
