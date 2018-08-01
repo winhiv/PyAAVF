@@ -39,7 +39,7 @@ RESERVED_INFO = {
 }
 
 # Metadata lines which are singular
-SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference', 'source']
+SINGULAR_METADATA = ['fileformat', 'fileDate', 'source']
 
 # Conversion between value in file and Python value
 FIELD_COUNTS = {
