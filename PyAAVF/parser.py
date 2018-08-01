@@ -340,12 +340,19 @@ class Writer(object):
         """Write the header line of the AAVF output"""
         self.stream.write('#' + '\t'.join(self.template.column_headers) + '\n')
 
-    def write_record(self, record):
+    def write_record(self, record, decimals=None):
         """Write the record into the next line of the AAVF output
-           write a record to the file """
+           write a record to the file. When passed as an argument, decimals
+           specifies the number of decimal places of ALT_FREQ that will be
+           printed out."""
         ffs = [record.CHROM, record.GENE, str(record.POS), record.REF]
         ffs += [self._format_alt(record.ALT), self._format_filter(record.FILTER)]
-        ffs += [str(record.ALT_FREQ), str(record.COVERAGE), self._format_info(record.INFO)]
+        if decimals is not None:
+            formatter = "%0." + str(decimals) + "f"
+            ffs += [formatter % record.ALT_FREQ]
+        else:
+            ffs += [str(record.ALT_FREQ)]
+        ffs += [str(record.COVERAGE), self._format_info(record.INFO)]
         ffs = _map(str, ffs)
         self.stream.write('\t'.join(ffs)+'\n')
 

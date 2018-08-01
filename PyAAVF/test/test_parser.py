@@ -147,7 +147,7 @@ class TestWriter(object):
         """Test whether writes to file work as expected."""
         reader = parser.Reader(SAMPLE_FILE)
         aavf_obj = reader.read_records()
-        out = fhandle('sampleoutput.aavf', "w+")
+        out = fhandle('sampleoutput3.aavf', "w+")
         writer = parser.Writer(out, aavf_obj)
 
         records = list(aavf_obj)
@@ -156,7 +156,7 @@ class TestWriter(object):
             writer.write_record(record)
 
         out.close()
-        reader1 = parser.Reader(SAMPLE_FILE).read_records()
+        reader1 = parser.Reader(TEST_PATH + '/sampleoutput3.aavf').read_records()
 
         reader2 = parser.Reader(SAMPLE_FILE).read_records()
         assert len(list(reader1)) == len(list(reader2))
@@ -165,6 +165,31 @@ class TestWriter(object):
         reader2 = parser.Reader(SAMPLE_FILE).read_records()
         for left, right in zip(reader1, reader2):
             assert left.INFO == right.INFO
+
+    def test_write_and_format_decimals(self):
+        """Test whether writes to file work with specifying a certain number
+           of decimals for the ALT_FREQ field output as expected."""
+
+        for num_dec in range(3, 6):
+            reader = parser.Reader(SAMPLE_FILE)
+            aavf_obj = reader.read_records()
+            out = fhandle('sampleoutput4.aavf', "w+")
+            writer = parser.Writer(out, aavf_obj)
+
+            records = list(aavf_obj)
+            for record in records:
+                writer.write_record(record, decimals=num_dec)
+
+            out.close()
+            reader1 = parser.Reader(TEST_PATH + '/sampleoutput4.aavf').read_records()
+            reader2 = parser.Reader(SAMPLE_FILE).read_records()
+            writer.close()
+            # each ALT_FREQ field's string should have num_dec + 2 characters
+            # e.g. 0.123 if num_dec is three
+            for left, right in zip(reader1, reader2):
+                assert left.INFO == right.INFO
+                assert left.ALT_FREQ == round(right.ALT_FREQ, num_dec), \
+                    "%s and %s should be the same up to the %dth decimal place" % (left.ALT_FREQ, right.ALT_FREQ, num_dec)
 
 class TestReader(object):
     """Perfom tests to make sure that the Reader is performing as expected"""
