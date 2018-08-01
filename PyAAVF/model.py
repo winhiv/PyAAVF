@@ -23,6 +23,7 @@ specific language governing permissions and limitations under the License.
 """
 
 
+# pylint: disable=useless-object-inheritance
 class AAVF(object):
     '''An iterable AAVF object that contains the metadata from an AAVF file
        and an list of AAVF records.'''
@@ -61,6 +62,7 @@ class AAVF(object):
         return self.__next__()
 
 
+# pylint: disable=useless-object-inheritance
 class _Record(object):
     """ Equivalent to a row in an AAVF file.
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,

@@ -39,7 +39,7 @@ RESERVED_INFO = {
 }
 
 # Metadata lines which are singular
-SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference', 'source']
+SINGULAR_METADATA = ['fileformat', 'fileDate', 'source']
 
 # Conversion between value in file and Python value
 FIELD_COUNTS = {
@@ -52,6 +52,7 @@ _Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
 _Filter = collections.namedtuple('Filter', ['id', 'desc'])
 
 
+# pylint: disable=useless-object-inheritance
 class _aavfMetadataParser(object):
     '''Parse the metadata in the header of a AAVF file.'''
     def __init__(self):
@@ -119,7 +120,7 @@ class _aavfMetadataParser(object):
         return (match.group('key'), match.group('val'))
 
 
-# pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
+# pylint: disable=too-many-instance-attributes,too-few-public-methods,useless-object-inheritance
 class Reader(object):
     """ Reader that can be used for parsing records from AAVF files.
         You must specify file name."""
@@ -133,11 +134,9 @@ class Reader(object):
             raise Exception('You must provide a file name.')
 
         if filename:
-            dirname = os.path.dirname(__file__)
-            the_path = os.path.join(dirname, filename)
-            if os.path.isfile(the_path):
-                self._reader = open(the_path, "r")
-            elif os.path.isdir(the_path):
+            if os.path.isfile(filename):
+                self._reader = open(filename, "r")
+            elif os.path.isdir(filename):
                 raise Exception('File path provided is a directory')
             else:
                 raise Exception('File path provided does not exist.')
@@ -313,6 +312,7 @@ class Reader(object):
                 self.column_headers.append(field.strip())
 
 
+# pylint: disable=useless-object-inheritance
 class Writer(object):
     """Writer for AAVF file. You must supply an output stream,
        and an Reader object to use as a template for the AAVF metadata and
