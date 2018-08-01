@@ -27,11 +27,12 @@ import itertools
 import re
 import os
 
-from PyAAVF.model import _Record
+from PyAAVF.model import Record
 from PyAAVF.model import AAVF
-
-
-MISSING_VALUE = '.'
+from PyAAVF.model import Info
+from PyAAVF.model import Filter
+from PyAAVF.model import FIELD_COUNTS
+from PyAAVF.model import MISSING_VALUE
 
 # Metadata parsers/constants
 RESERVED_INFO = {
@@ -40,16 +41,6 @@ RESERVED_INFO = {
 
 # Metadata lines which are singular
 SINGULAR_METADATA = ['fileformat', 'fileDate', 'reference', 'source']
-
-# Conversion between value in file and Python value
-FIELD_COUNTS = {
-    MISSING_VALUE: None,  # Unknown number of values
-}
-
-
-_Info = collections.namedtuple('Info', ['id', 'num', 'type', 'desc', 'source',
-                                        'version'])
-_Filter = collections.namedtuple('Filter', ['id', 'desc'])
 
 
 class _aavfMetadataParser(object):
@@ -91,9 +82,9 @@ class _aavfMetadataParser(object):
 
         num = self.aavf_field_count(match.group('number'))
 
-        info = _Info(match.group('id'), num,
-                     match.group('type'), match.group('desc'),
-                     match.group('source'), match.group('version'))
+        info = Info(match.group('id'), num,
+                    match.group('type'), match.group('desc'),
+                    match.group('source'), match.group('version'))
 
         return (match.group('id'), info)
 
@@ -104,7 +95,7 @@ class _aavfMetadataParser(object):
             raise SyntaxError(
                 "One of the FILTER lines is malformed: %s" % filter_string)
 
-        filt = _Filter(match.group('id'), match.group('desc'))
+        filt = Filter(match.group('id'), match.group('desc'))
 
         return (match.group('id'), filt)
 
@@ -188,8 +179,8 @@ class Reader(object):
 
             info = self._parse_info(row[8])
 
-            record = _Record(chrom, gene, pos, ref, alt, filt, alt_freq, coverage,
-                             info)
+            record = Record(chrom, gene, pos, ref, alt, filt, alt_freq, coverage,
+                            info)
             record_list.append(record)
             try:
                 line = next(self.reader)
@@ -226,7 +217,7 @@ class Reader(object):
             entry = entry.split('=', 1)
             info_id = entry[0]
             try:
-                entry_type = self.infos[info_id].type
+                entry_type = self.infos[info_id].info_type
             except KeyError:
                 try:
                     entry_type = RESERVED_INFO[info_id]
@@ -259,7 +250,7 @@ class Reader(object):
                     val = True
 
             try:
-                if self.infos[info_id].num == 1 and entry_type not in ('Flag', ):
+                if self.infos[info_id].info_num == 1 and entry_type not in ('Flag', ):
                     val = val[0]
             except KeyError:
                 pass
@@ -318,9 +309,6 @@ class Writer(object):
        and an Reader object to use as a template for the AAVF metadata and
        header. Optionally specify the line terminator."""
 
-    # Reverse keys and values in header field count dictionary
-    counts = dict((v, k) for k, v in FIELD_COUNTS.items())
-
     def __init__(self, stream, template):
         self.template = template
         self.stream = stream
@@ -331,9 +319,6 @@ class Writer(object):
             lambda: len(template.infos),
             dict(zip(template.infos.keys(), itertools.count())))
 
-        two = '##{key}=<ID={0},Description="{1}">\n'
-        four = '##{key}=<ID={0},Number={num},Type={2},Description="{3}">\n'
-        _num = self._fix_field_count
         for (key, vals) in template.metadata.items():
             if key in SINGULAR_METADATA:
                 vals = [vals]
@@ -345,9 +330,9 @@ class Writer(object):
                 else:
                     stream.write('##{0}={1}\n'.format(key, val))
         for line in template.infos.values():
-            stream.write(four.format(key="INFO", *line, num=_num(line.num)))
+            stream.write(str(line))
         for line in template.filters.values():
-            stream.write(two.format(key="FILTER", *line))
+            stream.write(str(line))
 
         self._write_header()
 
@@ -377,15 +362,6 @@ class Writer(object):
             self.stream.close()
         except AttributeError:
             pass
-
-    def _fix_field_count(self, num_str):
-        """Restore header number to original state"""
-        ret_val = None
-        if num_str not in self.counts:
-            ret_val = num_str
-        else:
-            ret_val = self.counts[num_str]
-        return ret_val
 
     # pylint: disable=no-self-use
     def _format_alt(self, alt):

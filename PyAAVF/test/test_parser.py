@@ -25,7 +25,7 @@ specific language governing permissions and limitations under the License.
 import os
 import PyAAVF.parser as parser
 from PyAAVF.model import AAVF
-from PyAAVF.model import _Record
+from PyAAVF.model import Record
 
 try:
     from StringIO import StringIO
@@ -190,4 +190,4 @@ class TestReader(object):
         assert len(record_list) == 7
         # all data lines should be the same as in the sample file
         for record in record_list:
-            assert isinstance(record, _Record)
+            assert isinstance(record, Record)
