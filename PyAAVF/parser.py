@@ -133,11 +133,9 @@ class Reader(object):
             raise Exception('You must provide a file name.')
 
         if filename:
-            dirname = os.path.dirname(__file__)
-            the_path = os.path.join(dirname, filename)
-            if os.path.isfile(the_path):
-                self._reader = open(the_path, "r")
-            elif os.path.isdir(the_path):
+            if os.path.isfile(filename):
+                self._reader = open(filename, "r")
+            elif os.path.isdir(filename):
                 raise Exception('File path provided is a directory')
             else:
                 raise Exception('File path provided does not exist.')
