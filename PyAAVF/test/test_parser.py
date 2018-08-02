@@ -216,3 +216,27 @@ class TestReader(object):
         # all data lines should be the same as in the sample file
         for record in record_list:
             assert isinstance(record, Record)
+
+    def test_read_from_stream(self):
+        """Test whether reads from stream work as expected and if the AAVF
+           record object returned is correct."""
+        aavf = parser.Reader(open(SAMPLE_FILE, "r")).read_records()
+        record_list = [record for record in aavf]
+
+        assert isinstance(aavf, AAVF)
+
+        assert aavf.metadata.get("fileformat") == "AAVFv1.0", \
+               "fileformat should be AAVFv1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("fileDate") == "20180501", \
+               "filedate should be 20180501, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("source") == "myProgramV1.0", \
+               "source should be myProgramV1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("reference") == ["hxb2.fas"], \
+               "reference list should be [hxb2.fas], metadata is %s" % aavf.metadata
+        assert aavf.infos
+        assert aavf.filters
+
+        assert len(record_list) == 7
+        # all data lines should be the same as in the sample file
+        for record in record_list:
+            assert isinstance(record, Record)

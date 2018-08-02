@@ -114,20 +114,23 @@ class _aavfMetadataParser(object):
 # pylint: disable=too-many-instance-attributes,too-few-public-methods,useless-object-inheritance
 class Reader(object):
     """ Reader that can be used for parsing records from AAVF files.
-        You must specify file name."""
+        You must specify file name or stream."""
 
-    def __init__(self, filename):
-        """ Create a new Reader for a AAVF file. You must specify file handle.
+    def __init__(self, fname_or_stream):
+        """ Create a new Reader for a AAVF file. You must specify file name
+            or stream.
         """
         super(Reader, self).__init__()
 
-        if not filename:
-            raise Exception('You must provide a file name.')
+        if not fname_or_stream:
+            raise Exception('You must provide a file name or stream.')
 
-        if filename:
-            if os.path.isfile(filename):
-                self._reader = open(filename, "r")
-            elif os.path.isdir(filename):
+        if hasattr(fname_or_stream, 'read'):
+            self._reader = fname_or_stream
+        else:
+            if os.path.isfile(fname_or_stream):
+                self._reader = open(fname_or_stream, "r")
+            elif os.path.isdir(fname_or_stream):
                 raise Exception('File path provided is a directory')
             else:
                 raise Exception('File path provided does not exist.')
