@@ -89,7 +89,7 @@ class TestInfoOrder(object):
             writer.write_record(record)
         out.seek(0)
         out_str = out.getvalue()
-
+        out.close()
         definitions = []
         for line in out_str.split('\n'):
             if line.startswith('##INFO='):
@@ -197,6 +197,63 @@ class TestReader(object):
         """Test whether reads from file work as expected and if the AAVF record
            object returned is correct."""
         aavf = parser.Reader(SAMPLE_FILE).read_records()
+        record_list = [record for record in aavf]
+
+        assert isinstance(aavf, AAVF)
+
+        assert aavf.metadata.get("fileformat") == "AAVFv1.0", \
+               "fileformat should be AAVFv1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("fileDate") == "20180501", \
+               "filedate should be 20180501, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("source") == "myProgramV1.0", \
+               "source should be myProgramV1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("reference") == ["hxb2.fas"], \
+               "reference list should be [hxb2.fas], metadata is %s" % aavf.metadata
+        assert aavf.infos
+        assert aavf.filters
+
+        assert len(record_list) == 7
+        # all data lines should be the same as in the sample file
+        for record in record_list:
+            assert isinstance(record, Record)
+
+    def test_read_from_stream(self):
+        """Test whether reads from stream work as expected and if the AAVF
+           record object returned is correct."""
+        aavf = parser.Reader(open(SAMPLE_FILE, "r")).read_records()
+        record_list = [record for record in aavf]
+
+        assert isinstance(aavf, AAVF)
+
+        assert aavf.metadata.get("fileformat") == "AAVFv1.0", \
+               "fileformat should be AAVFv1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("fileDate") == "20180501", \
+               "filedate should be 20180501, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("source") == "myProgramV1.0", \
+               "source should be myProgramV1.0, metadata is %s" % aavf.metadata
+        assert aavf.metadata.get("reference") == ["hxb2.fas"], \
+               "reference list should be [hxb2.fas], metadata is %s" % aavf.metadata
+        assert aavf.infos
+        assert aavf.filters
+
+        assert len(record_list) == 7
+        # all data lines should be the same as in the sample file
+        for record in record_list:
+            assert isinstance(record, Record)
+
+class TestStreamIO(object):
+    """System tests for reading and writing from stream"""
+    def test_write_to_read_from_stream(self):
+        reader0 = parser.Reader(SAMPLE_FILE)
+        aavf_obj = reader0.read_records()
+        out = StringIO()
+        writer = parser.Writer(out, aavf_obj)
+
+        for record in aavf_obj:
+            writer.write_record(record)
+        out.seek(0)
+        aavf = parser.Reader(out).read_records()
+        out.close()
         record_list = [record for record in aavf]
 
         assert isinstance(aavf, AAVF)
