@@ -309,7 +309,7 @@ class Reader(object):
 # pylint: disable=useless-object-inheritance
 class Writer(object):
     """Writer for AAVF file. You must supply an output stream,
-       and an Reader object to use as a template for the AAVF metadata and
+       and an AAVF object to use as a template for the AAVF metadata and
        header. Optionally specify the line terminator."""
 
     def __init__(self, stream, template):
