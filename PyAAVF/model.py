@@ -22,6 +22,59 @@ CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
 
+MISSING_VALUE = '.'
+
+# Conversion between value in file and Python value
+FIELD_COUNTS = {
+    MISSING_VALUE: None,  # Unknown number of values
+}
+
+
+# pylint: disable=useless-object-inheritance
+class Info(object):
+    '''An object that defines the metadata INFO field attributes'''
+
+    # pylint: disable=invalid-name,too-many-arguments,too-few-public-methods
+    def __init__(self, info_id, info_num, info_type, info_desc, info_source, info_version):
+
+        # Reverse keys and values in header field count dictionary
+        self.counts = dict((v, k) for k, v in FIELD_COUNTS.items())
+
+        self.info_id = info_id
+        self.info_num = info_num
+        self.info_type = info_type
+        self.info_desc = info_desc
+        self.info_source = info_source
+        self.info_version = info_version
+
+    def __str__(self):
+        info_line = "##INFO=<ID=%s,Number=%s,Type=%s,Description=\"%s\">\n"
+        return info_line % (self.info_id, self._fix_field_count(self.info_num),
+                            self.info_type, self.info_desc)
+
+    def _fix_field_count(self, num_str):
+        """Restore header number to original state"""
+        ret_val = None
+        if num_str not in self.counts:
+            ret_val = num_str
+        else:
+            ret_val = self.counts[num_str]
+        return ret_val
+
+
+# pylint: disable=useless-object-inheritance
+class Filter(object):
+    '''An object that defines the metadata FILTER field attributes'''
+
+    # pylint: disable=invalid-name,too-few-public-methods
+    def __init__(self, filter_id, filter_desc):
+        self.filter_id = filter_id
+        self.filter_desc = filter_desc
+
+    def __str__(self):
+        filter_line = "##FILTER=<ID=%s,Description=\"%s\">\n"
+        return filter_line % (self.filter_id, self.filter_desc)
+
 
 # pylint: disable=useless-object-inheritance
 class AAVF(object):
@@ -63,7 +116,7 @@ class AAVF(object):
 
 
 # pylint: disable=useless-object-inheritance
-class _Record(object):
+class Record(object):
     """ Equivalent to a row in an AAVF file.
         The standard AAVF fields CHROM, GENE, POS, REF, ALT, FILTER, ALT_FREQ,
         COVERAGE and INFO are available as properties.
