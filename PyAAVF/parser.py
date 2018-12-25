@@ -40,7 +40,7 @@ RESERVED_INFO = {
 }
 
 # Metadata lines which are singular
-SINGULAR_METADATA = ['fileformat', 'fileDate', 'source']
+SINGULAR_METADATA = ['fileformat', 'fileDate', 'source', 'reference']
 
 
 # pylint: disable=useless-object-inheritance
